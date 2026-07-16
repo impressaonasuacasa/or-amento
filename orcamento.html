@@ -20,6 +20,30 @@
   .pdv-topbar__brand-text{ display:flex; flex-direction:column; line-height:1.25; }
   .pdv-topbar__brand-name{ font-weight:700; font-size:13.5px; color:var(--color-text-900); }
   .pdv-topbar__brand-sub{ font-size:11.5px; color:var(--color-text-500); }
+
+  /* Fase 2 — "cofre" da análise de margem: visualmente distinto do resto do
+     ticket (tokens de amber já existentes), recolhido por padrão. */
+  .pdv-margin-box{
+    background:var(--color-amber-100);
+    border:1px solid rgba(183,121,31,0.28);
+    border-radius:var(--radius-md);
+    overflow:hidden;
+  }
+  .pdv-margin-box__summary{
+    display:flex; align-items:center; gap:8px;
+    padding:12px 16px; cursor:pointer; list-style:none;
+    font-size:12.5px; font-weight:600; color:var(--color-amber-600);
+    user-select:none;
+  }
+  .pdv-margin-box__summary::-webkit-details-marker{ display:none; }
+  .pdv-margin-box__summary svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; flex-shrink:0; }
+  .pdv-margin-box__summary .chevron{ margin-left:auto; transition:transform var(--dur-fast) var(--ease-standard); }
+  .pdv-margin-box[open] .pdv-margin-box__summary .chevron{ transform:rotate(180deg); }
+  .pdv-margin-box__body{ padding:2px 16px 16px; border-top:1px solid rgba(183,121,31,0.22); }
+
+  /* Fase 2 — validação inline de campo obrigatório */
+  .field-error{ font-size:11.5px; font-weight:600; color:var(--color-red-600); margin-top:-6px; }
+  .field.field--invalid input, .field.field--invalid select{ border-color:var(--color-red-600); }
 </style>
 </head>
 <body>
@@ -79,7 +103,6 @@
                   </select>
                 </div>
               </div>
-              <select id="orcProduto" style="display:none;"></select>
             </div>
           </div>
 
@@ -103,6 +126,7 @@
                 <label>Nome do cliente avulso</label>
                 <input type="text" id="orcClienteAvulso" placeholder="Ex: Mariana Prado">
               </div>
+              <div class="field-error" id="orcClienteErro"></div>
 
               <div class="field">
                 <label>KM do fornecedor até o cliente <span class="text-muted" style="font-weight:400; font-size:12px;">(logística variável — muda a cada pedido)</span></label>
@@ -129,21 +153,28 @@
 
               <hr class="divider">
 
-              <div>
-                <div class="text-muted" style="margin-bottom:8px; font-weight:600;">Análise de margem (não é enviada ao cliente)</div>
-                <div id="orcAdminPanel">
+              <!-- Feedback operacional (bloqueia gerar orçamento) — sempre visível,
+                   diferente da análise de margem abaixo, que é só pro dono ver. -->
+              <div id="orcErro"></div>
+
+              <details class="pdv-margin-box" id="orcMargemDetails">
+                <summary class="pdv-margin-box__summary">
+                  <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                  <span>Análise de margem <span style="font-weight:400;">— área restrita, não é enviada ao cliente</span></span>
+                  <svg class="chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </summary>
+                <div id="orcAdminPanel" class="pdv-margin-box__body">
                   <div class="chart-placeholder" style="height:150px;">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/></svg>
                     <span>Selecione um produto para ver custo, lucro e margem aqui.</span>
                   </div>
                 </div>
-              </div>
+              </details>
 
               <button class="btn btn-primary" id="btnGerarOrcamento" type="button" style="margin-top:4px;">
                 <svg viewBox="0 0 24 24"><path d="M9 12.5 11 15l4-5"/><circle cx="12" cy="12" r="9"/></svg>
                 Gerar orçamento
               </button>
-              <div id="orcErro"></div>
             </div>
 
             <div class="card panel" id="orcMensagemPanel" style="display:none;"></div>
@@ -173,11 +204,8 @@ function refreshOrcamentoClienteOptions() {
   sel.innerHTML = clienteOptionsHtml(current);
 }
 
-function popularSelectProdutos() {
-  const sel = document.getElementById("orcProduto");
-  const produtos = Store.get().products;
-  sel.innerHTML = produtos.map(p => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
-}
+// Fonte da verdade da seleção de produto no PDV — substitui o antigo <select id="orcProduto"> oculto.
+let produtoSelecionadoId = null;
 
 let orcCategoriaAtual = "todas";
 const PRODUTO_ICONS = {
@@ -208,7 +236,7 @@ function renderOrcCategoriaChips() {
 function renderOrcCatalogoGrid() {
   const produtos = Store.get().products.filter(p => orcCategoriaAtual === "todas" || (p.categoria || "Outros") === orcCategoriaAtual);
   const grid = document.getElementById("orcCatalogoGrid");
-  const selecionadoId = document.getElementById("orcProduto").value;
+  const selecionadoId = produtoSelecionadoId;
   if (!produtos.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;">${emptyStateHtml("Nenhum produto nessa categoria", "Cadastre produtos na guia Produtos para vê-los aqui.")}</div>`;
     return;
@@ -225,7 +253,7 @@ function renderOrcCatalogoGrid() {
 }
 
 function selecionarProdutoPDV(produtoId) {
-  document.getElementById("orcProduto").value = produtoId;
+  produtoSelecionadoId = produtoId;
   renderOrcCatalogoGrid();
   popularSelectMateriais(produtoId);
   atualizarCamposQuantidade();
@@ -243,8 +271,79 @@ function popularSelectMateriais(produtoId) {
   sel.innerHTML = (produto.materiais || []).map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join("");
 }
 
+/* ==========================================================================
+   Ponto único de decisão dos modos de preço (Fase 1 / Fase 7 da auditoria).
+   Cada modo sabe (a) como configurar os campos de quantidade/lado na UI e
+   (b) como calcular custo/venda a partir do material e dos campos atuais.
+   Adicionar um 4º modo de preço = adicionar uma chave nova aqui, sem tocar
+   em atualizarCamposQuantidade nem calcularOrcamentoAtual.
+   ========================================================================== */
+const MODOS_PRECO = {
+  tiers: {
+    configurarCampos(produto, material, els) {
+      els.qtdLabel.textContent = "Quantidade";
+      els.qtdSelect.style.display = "";
+      els.qtdInput.style.display = "none";
+      els.qtdSelect.innerHTML = (material.tiers || []).map(t => `<option value="${t.qtd}">${formatNum(t.qtd)} unidades</option>`).join("");
+      els.ladoWrapper.style.display = "";
+    },
+    calcular(material, lado, els) {
+      const quantidade = parseFloat(els.qtdSelect.value);
+      const tier = (material.tiers || []).find(t => t.qtd === quantidade);
+      if (!tier) return { erro: "Quantidade não encontrada na tabela deste material." };
+      const custo = lado === "fv" ? tier.custoFV : tier.custoFrente;
+      const venda = lado === "fv" ? tier.vendaFV : tier.vendaFrente;
+      if (custo === null || custo === undefined) return { erro: "Custo não cadastrado para essa combinação de quantidade e impressão." };
+      if (venda === null || venda === undefined) return { erro: "Preço de venda não cadastrado para essa combinação de quantidade e impressão." };
+      return { quantidade, custoTotal: custo, vendaTotal: venda, erro: null };
+    }
+  },
+  faixas: {
+    configurarCampos(produto, material, els) {
+      els.qtdLabel.textContent = `Quantidade (mínimo ${produto.qtdMinima || 1})`;
+      els.qtdSelect.style.display = "none";
+      els.qtdInput.style.display = "";
+      els.qtdInput.min = produto.qtdMinima || 1;
+      els.qtdInput.value = els.qtdInput.value || (produto.qtdMinima || 1);
+      els.ladoWrapper.style.display = "none";
+    },
+    calcular(material, lado, els, produto) {
+      const quantidade = parseInt(els.qtdInput.value, 10);
+      if (!quantidade || quantidade < (produto.qtdMinima || 1)) return { erro: `Informe uma quantidade válida (mínimo ${produto.qtdMinima || 1}).` };
+      const faixa = buscarFaixa(material.faixas, quantidade);
+      if (!faixa) return { erro: "Não existe faixa de preço cadastrada para essa quantidade." };
+      if (faixa.custo === null) return { erro: "Custo não cadastrado para essa faixa de quantidade." };
+      if (faixa.venda === null) return { erro: "Preço de venda não cadastrado para essa faixa de quantidade." };
+      return { quantidade, custoTotal: faixa.custo * quantidade, vendaTotal: faixa.venda * quantidade, erro: null };
+    }
+  },
+  padrao: {
+    configurarCampos(produto, material, els) {
+      els.qtdLabel.textContent = "Quantidade";
+      els.qtdSelect.style.display = "none";
+      els.qtdInput.style.display = "";
+      els.qtdInput.min = 1;
+      els.qtdInput.value = els.qtdInput.value || 1;
+      els.ladoWrapper.style.display = "none";
+    },
+    calcular(material, lado, els) {
+      const quantidade = parseInt(els.qtdInput.value, 10);
+      if (!quantidade || quantidade < 1) return { erro: "Informe uma quantidade válida." };
+      if (material.custo === null || material.custo === undefined) return { erro: "Custo não cadastrado para este material." };
+      if (material.venda === null || material.venda === undefined) return { erro: "Preço de venda não cadastrado para este material." };
+      return { quantidade, custoTotal: material.custo * quantidade, vendaTotal: material.venda * quantidade, erro: null };
+    }
+  }
+};
+
+// produto.modoPreco pode ser "tiers", "faixas" ou ausente/outro valor — mesmo
+// fallback para "padrao" que o código original tinha no else final.
+function modoPrecoDoProduto(produto) {
+  return MODOS_PRECO[produto.modoPreco] || MODOS_PRECO.padrao;
+}
+
 function atualizarCamposQuantidade() {
-  const produto = getProductById(document.getElementById("orcProduto").value);
+  const produto = getProductById(produtoSelecionadoId);
   const material = produto ? (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value) : null;
   const qtdSelect = document.getElementById("orcQtdSelect");
   const qtdInput = document.getElementById("orcQtdInput");
@@ -253,62 +352,21 @@ function atualizarCamposQuantidade() {
 
   if (!produto || !material) { qtdSelect.style.display = "none"; qtdInput.style.display = "none"; return; }
 
-  if (produto.modoPreco === "tiers") {
-    qtdLabel.textContent = "Quantidade";
-    qtdSelect.style.display = "";
-    qtdInput.style.display = "none";
-    qtdSelect.innerHTML = (material.tiers || []).map(t => `<option value="${t.qtd}">${formatNum(t.qtd)} unidades</option>`).join("");
-    ladoWrapper.style.display = "";
-  } else if (produto.modoPreco === "faixas") {
-    qtdLabel.textContent = `Quantidade (mínimo ${produto.qtdMinima || 1})`;
-    qtdSelect.style.display = "none";
-    qtdInput.style.display = "";
-    qtdInput.min = produto.qtdMinima || 1;
-    qtdInput.value = qtdInput.value || (produto.qtdMinima || 1);
-    ladoWrapper.style.display = "none";
-  } else {
-    qtdLabel.textContent = "Quantidade";
-    qtdSelect.style.display = "none";
-    qtdInput.style.display = "";
-    qtdInput.min = 1;
-    qtdInput.value = qtdInput.value || 1;
-    ladoWrapper.style.display = "none";
-  }
+  modoPrecoDoProduto(produto).configurarCampos(produto, material, { qtdSelect, qtdInput, ladoWrapper, qtdLabel });
 }
 
 function calcularOrcamentoAtual() {
-  const produto = getProductById(document.getElementById("orcProduto").value);
+  const produto = getProductById(produtoSelecionadoId);
   if (!produto) return { erro: "Cadastre ao menos um produto para gerar orçamentos." };
   const material = (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value);
   if (!material) return { erro: "Este produto ainda não tem nenhum material cadastrado." };
 
   const lado = document.getElementById("orcLado").value;
-  let quantidade, custoTotal, vendaTotal;
+  const els = { qtdSelect: document.getElementById("orcQtdSelect"), qtdInput: document.getElementById("orcQtdInput") };
 
-  if (produto.modoPreco === "tiers") {
-    quantidade = parseFloat(document.getElementById("orcQtdSelect").value);
-    const tier = (material.tiers || []).find(t => t.qtd === quantidade);
-    if (!tier) return { erro: "Quantidade não encontrada na tabela deste material." };
-    const custo = lado === "fv" ? tier.custoFV : tier.custoFrente;
-    const venda = lado === "fv" ? tier.vendaFV : tier.vendaFrente;
-    if (custo === null || custo === undefined) return { erro: "Custo não cadastrado para essa combinação de quantidade e impressão." };
-    if (venda === null || venda === undefined) return { erro: "Preço de venda não cadastrado para essa combinação de quantidade e impressão." };
-    custoTotal = custo; vendaTotal = venda;
-  } else if (produto.modoPreco === "faixas") {
-    quantidade = parseInt(document.getElementById("orcQtdInput").value, 10);
-    if (!quantidade || quantidade < (produto.qtdMinima || 1)) return { erro: `Informe uma quantidade válida (mínimo ${produto.qtdMinima || 1}).` };
-    const faixa = buscarFaixa(material.faixas, quantidade);
-    if (!faixa) return { erro: "Não existe faixa de preço cadastrada para essa quantidade." };
-    if (faixa.custo === null) return { erro: "Custo não cadastrado para essa faixa de quantidade." };
-    if (faixa.venda === null) return { erro: "Preço de venda não cadastrado para essa faixa de quantidade." };
-    custoTotal = faixa.custo * quantidade; vendaTotal = faixa.venda * quantidade;
-  } else {
-    quantidade = parseInt(document.getElementById("orcQtdInput").value, 10);
-    if (!quantidade || quantidade < 1) return { erro: "Informe uma quantidade válida." };
-    if (material.custo === null || material.custo === undefined) return { erro: "Custo não cadastrado para este material." };
-    if (material.venda === null || material.venda === undefined) return { erro: "Preço de venda não cadastrado para este material." };
-    custoTotal = material.custo * quantidade; vendaTotal = material.venda * quantidade;
-  }
+  const resultado = modoPrecoDoProduto(produto).calcular(material, lado, els, produto);
+  if (resultado.erro) return { erro: resultado.erro };
+  const { quantidade, custoTotal, vendaTotal } = resultado;
 
   const margem = calcularMargem(custoTotal, vendaTotal);
 
@@ -502,6 +560,11 @@ function converterOrcamentoEmPedido(budgetId) {
   refreshSidebarBadges();
 }
 
+function renderOrcErroOperacional(mensagem) {
+  const el = document.getElementById("orcErro");
+  el.innerHTML = mensagem ? `<div class="badge tone-red" style="margin-top:2px;">${escapeHtml(mensagem)}</div>` : "";
+}
+
 function atualizarPreviaOrcamento() {
   // Atualizar label do KM em tempo real
   const kmEl = document.getElementById("orcKmCliente");
@@ -517,16 +580,29 @@ function atualizarPreviaOrcamento() {
     }
   }
 
-  const produtoId = document.getElementById("orcProduto").value;
-  if (!produtoId) { renderOrcAdminPanel(null); return; }
+  if (!produtoSelecionadoId) { renderOrcAdminPanel(null); renderOrcErroOperacional(""); return; }
   const calc = calcularOrcamentoAtual();
+  // A análise de margem (calc completo) fica dentro do accordion recolhido —
+  // mas um erro que bloqueia o orçamento (produto/material/quantidade inválidos,
+  // custo não cadastrado) precisa aparecer fora dele, sem o operador precisar abrir.
+  renderOrcErroOperacional(calc.erro);
   renderOrcAdminPanel(calc);
 }
 
+function validarCliente() {
+  const clienteSel = document.getElementById("orcClienteSelect");
+  const avulsoInput = document.getElementById("orcClienteAvulso");
+  const avulsoWrap = document.getElementById("orcClienteAvulsoWrapper");
+  const erroEl = document.getElementById("orcClienteErro");
+  const valido = !!clienteSel.value || !!avulsoInput.value.trim();
+  avulsoWrap.classList.toggle("field--invalid", !valido);
+  erroEl.textContent = valido ? "" : "Selecione um cliente cadastrado ou informe o nome do cliente avulso.";
+  return valido;
+}
+
 function initOrcamentosPage() {
-  popularSelectProdutos();
   refreshOrcamentoClienteOptions();
-  document.getElementById("orcProduto").value = "";
+  produtoSelecionadoId = null;
   document.getElementById("orcSelecaoPanel").style.display = "none";
   document.getElementById("orcItemSelecionado").innerHTML = `Selecione um produto no catálogo ao lado.`;
   orcCategoriaAtual = "todas";
@@ -538,10 +614,14 @@ function initOrcamentosPage() {
   renderOrcHistorico();
 
   const clienteSel = document.getElementById("orcClienteSelect");
+  const avulsoInput = document.getElementById("orcClienteAvulso");
   const avulsoWrap = document.getElementById("orcClienteAvulsoWrapper");
   const syncAvulso = () => { avulsoWrap.style.display = clienteSel.value ? "none" : "flex"; };
-  clienteSel.onchange = syncAvulso;
+  clienteSel.onchange = () => { syncAvulso(); validarCliente(); };
   syncAvulso();
+  // Fase 2: feedback assim que o campo perde o foco ou é corrigido — não só ao clicar em "Gerar orçamento".
+  avulsoInput.addEventListener("blur", validarCliente);
+  avulsoInput.addEventListener("input", () => { if (avulsoInput.value.trim()) validarCliente(); });
 
   document.getElementById("orcMaterial").onchange = () => { atualizarCamposQuantidade(); atualizarPreviaOrcamento(); };
   document.getElementById("orcQtdSelect").onchange = atualizarPreviaOrcamento;
@@ -554,20 +634,15 @@ function initOrcamentosPage() {
 
   document.getElementById("btnGerarOrcamento").onclick = () => {
     const calc = calcularOrcamentoAtual();
-    const erroEl = document.getElementById("orcErro");
+    renderOrcErroOperacional(calc.erro);
     if (calc.erro) {
-      erroEl.innerHTML = `<div class="badge tone-red" style="margin-top:10px;">${escapeHtml(calc.erro)}</div>`;
       renderOrcAdminPanel(calc);
       return;
     }
-    erroEl.innerHTML = "";
+    if (!validarCliente()) return;
     const db = Store.get();
     const clienteId = clienteSel.value || null;
-    const clienteNomeLivre = clienteId ? "" : document.getElementById("orcClienteAvulso").value.trim();
-    if (!clienteId && !clienteNomeLivre) {
-      erroEl.innerHTML = `<div class="badge tone-red" style="margin-top:10px;">Selecione um cliente cadastrado ou informe o nome do cliente avulso.</div>`;
-      return;
-    }
+    const clienteNomeLivre = clienteId ? "" : avulsoInput.value.trim();
     const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
     const kmCliente = calc.kmCliente;
     const custoLogisticaVariavel = (kmCliente != null && kmCliente > 0) ? kmCliente * custoPorKm : null;
