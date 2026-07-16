@@ -1,0 +1,2986 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impressão na Sua Casa — Sistema de Gestão</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="sidebar-container"></div>
+
+  <div class="app-shell">
+    <div id="topbar-container"></div>
+
+    <main class="content">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <section id="page-dashboard" class="page-section">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Visão geral</h1>
+            <p>Todos os números abaixo vêm dos dados que você cadastrou no sistema.</p>
+          </div>
+          <div class="page-header__actions">
+            <select class="field" id="dashPeriodo" style="border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:9px 14px; font-size:13px; background:var(--color-white); color:var(--color-text-700); font-weight:600;">
+              <option value="mes">Este mês</option>
+              <option value="30d">Últimos 30 dias</option>
+              <option value="tudo">Desde o início</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="dashKpis"></div>
+
+        <div class="dash-grid">
+          <div class="card panel">
+            <div class="panel__header">
+              <h3>Faturamento — últimos 6 meses</h3>
+            </div>
+            <div id="dashFaturamentoChart"></div>
+          </div>
+
+          <div class="card panel">
+            <div class="panel__header">
+              <h3>Pedidos recentes</h3>
+              <button class="link" data-nav="pedidos">Ver todos</button>
+            </div>
+            <div id="dashPedidosRecentes"></div>
+          </div>
+        </div>
+
+        <div class="dash-grid" style="margin-top:18px;">
+          <div class="card panel">
+            <div class="panel__header"><h3>Produtos mais vendidos</h3></div>
+            <div id="dashTopProdutos"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel__header"><h3>Desempenho de fornecedores</h3></div>
+            <div id="dashFornecedores"></div>
+          </div>
+        </div>
+
+        <div id="dashEstoqueAlerta"></div>
+      </section>
+
+      <!-- ===================== PRODUTOS ===================== -->
+      <section id="page-produtos" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Produtos</h1>
+            <p>Catálogo, materiais, fornecedores e análise de margem.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-primary" id="btnNovoProduto" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo produto
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+            <input type="text" id="produtoSearch" placeholder="Pesquisar por produto ou material...">
+          </div>
+        </div>
+
+        <div id="produtosLista" class="stack"></div>
+      </section>
+
+      <!-- ===================== FORNECEDORES ===================== -->
+      <section id="page-fornecedores" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Fornecedores</h1>
+            <p>Controle os fornecedores e parceiros de terceirização.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-primary" id="btnNovoFornecedor" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo fornecedor
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+            <input type="text" id="fornecedorSearch" placeholder="Pesquisar por nome, CNPJ ou categoria...">
+          </div>
+        </div>
+
+        <div class="grid-2" id="fornecedoresGrid"></div>
+      </section>
+
+      <!-- ===================== CLIENTES ===================== -->
+      <section id="page-clientes" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Clientes</h1>
+            <p>Base de clientes, histórico de compras e orçamentos.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-primary" id="btnNovoCliente" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo cliente
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+            <input type="text" id="clienteSearch" placeholder="Pesquisar clientes por nome ou telefone...">
+          </div>
+        </div>
+
+        <div id="clientesTabela"></div>
+      </section>
+
+      <!-- ===================== PEDIDOS ===================== -->
+      <section id="page-pedidos" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Pedidos</h1>
+            <p>Acompanhe o andamento de todos os pedidos da gráfica.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-primary" id="btnNovoPedido" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo pedido
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar" style="flex-wrap:wrap; gap:8px;">
+          <div class="toolbar__filters" id="pedidoFiltros" style="flex-wrap:wrap;">
+            <span class="chip chip--active" data-status="todos">Todos</span>
+            <span class="chip" data-status="orcamento_criado">Orçamento criado</span>
+            <span class="chip" data-status="aguardando_aprovacao">Aguardando aprovação</span>
+            <span class="chip" data-status="pedido_confirmado">Confirmado</span>
+            <span class="chip" data-status="em_producao">Em produção</span>
+            <span class="chip" data-status="producao_finalizada">Produção finalizada</span>
+            <span class="chip" data-status="saiu_para_entrega">Saiu p/ entrega</span>
+            <span class="chip" data-status="entregue">Entregue</span>
+            <span class="chip" data-status="cancelado">Cancelado</span>
+          </div>
+        </div>
+
+        <div id="pedidosLista"></div>
+      </section>
+
+      <!-- ===================== FINANCEIRO ===================== -->
+      <section id="page-financeiro" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Financeiro</h1>
+            <p>Receitas, despesas e fluxo de caixa da empresa.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-secondary" id="btnNovaDespesa" type="button">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+              Nova despesa
+            </button>
+            <button class="btn btn-primary" id="btnNovaReceita" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nova receita
+            </button>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="finKpis"></div>
+
+        <div class="dash-grid">
+          <div class="card panel">
+            <div class="panel__header"><h3>Fluxo de caixa mensal</h3></div>
+            <div id="finFluxoChart"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel__header"><h3>Despesas por categoria</h3></div>
+            <div id="finDespesasDonut"></div>
+          </div>
+        </div>
+
+        <div class="card panel" style="margin-top:18px;">
+          <div class="panel__header">
+            <h3>Lançamentos</h3>
+            <div class="toolbar__filters" id="finFiltros">
+              <span class="chip chip--active" data-tipo="todos">Todos</span>
+              <span class="chip" data-tipo="receita">Receitas</span>
+              <span class="chip" data-tipo="despesa">Despesas</span>
+            </div>
+          </div>
+          <div id="financeiroTabela"></div>
+        </div>
+      </section>
+
+      <!-- ===================== CUSTOS ===================== -->
+      <section id="page-custos" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Custos</h1>
+            <p>Camada administrativa de custos reais da operação — não altera a guia Produtos, apenas se conecta a ela.</p>
+          </div>
+        </div>
+
+        <div class="tab-row" id="custosTabRow">
+          <button class="tab-btn active" data-custos-tab="fornecedores" type="button">Custos de Fornecedores</button>
+          <button class="tab-btn" data-custos-tab="logistica" type="button">Custos de Logística</button>
+          <button class="tab-btn" data-custos-tab="marketing" type="button">Marketing</button>
+        </div>
+
+        <!-- Sub-aba: Custos de Fornecedores -->
+        <div id="custosTabFornecedores">
+          <div class="toolbar">
+            <p class="text-muted" style="max-width:520px;">Registre o valor efetivamente pago ao fornecedor por produto/material, com histórico de alteração de preço.</p>
+            <button class="btn btn-primary" id="btnNovoCustoFornecedor" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo registro de custo
+            </button>
+          </div>
+          <div id="custosFornecedoresTabela"></div>
+        </div>
+
+        <!-- Sub-aba: Custos de Logística -->
+        <div id="custosTabLogistica" style="display:none;">
+          <div class="grid-2">
+            <div class="card card-pad">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="font-size:14px;">Custo médio por KM</h4>
+                <button class="btn btn-secondary btn-sm" id="btnEditarCustoKm" type="button">Editar</button>
+              </div>
+              <div class="mono" id="custoKmValor" style="font-size:24px; font-weight:700; margin-top:10px; color:var(--color-text-900);"></div>
+              <div class="text-muted" style="margin-top:4px;">Usado para calcular o custo de deslocamento até cada fornecedor.</div>
+            </div>
+            <div class="card card-pad">
+              <h4 style="font-size:14px;">Como funciona</h4>
+              <p class="text-muted" style="margin-top:8px; line-height:1.6;">Distância até o fornecedor × custo por KM = custo logístico. Esse valor aparece automaticamente na análise interna do Orçamento PDV, somado ao custo do fornecedor.</p>
+            </div>
+          </div>
+
+          <div class="toolbar" style="margin-top:18px;">
+            <h3 style="font-size:15px;">Rotas de deslocamento cadastradas</h3>
+            <button class="btn btn-primary" id="btnNovaRotaLogistica" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nova rota
+            </button>
+          </div>
+          <div id="custosLogisticaTabela"></div>
+        </div>
+
+        <!-- Sub-aba: Marketing (reflete os dados da guia Marketing — sem cadastro duplicado) -->
+        <div id="custosTabMarketing" style="display:none;">
+          <p class="text-muted" style="max-width:560px; margin-bottom:14px;">Consolidado do que já foi lançado na guia <strong>Marketing</strong> — investimento em campanhas e custos de divulgação. O cadastro é feito lá; aqui é só a leitura integrada.</p>
+          <div class="kpi-grid" id="custosMktKpis"></div>
+          <div class="card panel" style="margin-top:18px;">
+            <div class="panel__header"><h3>Investimento por plataforma</h3></div>
+            <div id="custosMktPlataformasTabela"></div>
+          </div>
+          <div class="card panel" style="margin-top:18px;">
+            <div class="panel__header">
+              <h3>Custos de marketing (designer, artes, ferramentas...)</h3>
+              <button class="link-btn" id="btnIrParaMarketing" type="button">Gerenciar em Marketing →</button>
+            </div>
+            <div id="custosMktCustosTabela"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ESTOQUE (mantido) ===================== -->
+      <section id="page-estoque" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Estoque</h1>
+            <p>Controle de materiais e produtos prontos que ficam fisicamente com você (mesmo trabalhando com terceirização).</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-primary" id="btnNovoEstoque" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo item de estoque
+            </button>
+          </div>
+        </div>
+
+        <div id="estoqueAlertaTop"></div>
+
+        <div class="toolbar">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+            <input type="text" id="estoqueSearch" placeholder="Pesquisar item de estoque...">
+          </div>
+        </div>
+
+        <div id="estoqueTabela"></div>
+      </section>
+
+      <!-- ===================== MARKETING ===================== -->
+      <section id="page-marketing" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Marketing</h1>
+            <p>Fechamento diário das campanhas por plataforma e custos de divulgação.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn-secondary" id="btnNovoCustoMkt" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Novo custo de marketing
+            </button>
+            <button class="btn btn-secondary" id="btnNovaPlataforma" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Adicionar plataforma
+            </button>
+            <button class="btn btn-primary" id="btnRegistrarDiaMkt" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Registrar dia
+            </button>
+          </div>
+        </div>
+
+        <div class="tab-row" id="mktPlataformaTabs"></div>
+
+        <div class="kpi-grid" id="mktKpis"></div>
+
+        <div class="card panel">
+          <div class="panel__header"><h3 id="mktTabelaTitulo">Fechamento diário</h3></div>
+          <div id="mktTabela"></div>
+        </div>
+
+        <div class="card panel" style="margin-top:18px;">
+          <div class="panel__header"><h3>Custos de Marketing</h3></div>
+          <p class="text-muted" style="margin-bottom:10px;">Designer, artes, ferramentas, assinaturas e outros custos de divulgação — mensais ou pontuais.</p>
+          <div id="mktCustosTabela"></div>
+        </div>
+      </section>
+
+      <!-- ===================== RELATÓRIOS ===================== -->
+      <section id="page-relatorios" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Relatórios</h1>
+            <p>Análises consolidadas a partir dos dados cadastrados.</p>
+          </div>
+        </div>
+
+        <div class="card panel" style="margin-bottom:18px;">
+          <div class="panel__header"><h3>Filtros</h3></div>
+          <div class="grid-3">
+            <div class="field">
+              <label>Período</label>
+              <select id="relPeriodo">
+                <option value="30">Últimos 30 dias</option>
+                <option value="90">Últimos 90 dias</option>
+                <option value="365">Últimos 12 meses</option>
+                <option value="tudo">Desde o início</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card panel">
+            <div class="panel__header"><h3>Vendas por período</h3></div>
+            <div id="relVendasChart"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel__header"><h3>Produtos mais vendidos</h3></div>
+            <div id="relProdutosChart"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel__header"><h3>Margem de lucro por produto</h3></div>
+            <div id="relMargemChart"></div>
+          </div>
+          <div class="card panel">
+            <div class="panel__header"><h3>Desempenho por fornecedor</h3></div>
+            <div id="relFornecedorChart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CONFIGURAÇÕES ===================== -->
+      <section id="page-configuracoes" class="page-section" style="display:none;">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Configurações</h1>
+            <p>Preferências do sistema e dados da empresa.</p>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="card card-pad">
+            <h4 style="font-size:14px; margin-bottom:14px;">Aparência</h4>
+            <div class="theme-switch" id="themeSwitch">
+              <button class="theme-opt" id="themeOptClaro" type="button">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+                <span>Modo claro</span>
+              </button>
+              <button class="theme-opt" id="themeOptEscuro" type="button">
+                <svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+                <span>Modo escuro</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Dados da empresa</h4>
+                <p id="empresaResumo">Nome, CNPJ e informações de contato.</p>
+              </div>
+              <button class="btn btn-secondary" id="btnEditarEmpresa" type="button">Editar</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Notificações por e-mail</h4>
+                <p>Receber avisos sobre novos pedidos e pagamentos.</p>
+              </div>
+              <button class="toggle" id="toggleNotifEmail" type="button"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Notificações por WhatsApp</h4>
+                <p>Receber avisos importantes diretamente no WhatsApp.</p>
+              </div>
+              <button class="toggle" id="toggleNotifWhatsapp" type="button"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Margem de referência padrão</h4>
+                <p>Usada para classificar orçamentos como "margem boa", "baixa" etc.</p>
+              </div>
+              <button class="btn btn-secondary" id="btnEditarMargens" type="button">Editar</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Exportar / importar dados</h4>
+                <p>Faça backup de todos os dados cadastrados ou restaure um backup.</p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn btn-secondary" id="btnExportarDados" type="button">Exportar</button>
+                <button class="btn btn-secondary" id="btnImportarDados" type="button">Importar</button>
+                <input type="file" id="inputImportarDados" accept="application/json" style="display:none;">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Usuários e permissões</h4>
+                <p>Gerenciar quem tem acesso ao sistema (em breve).</p>
+              </div>
+              <button class="btn btn-secondary" type="button" disabled>Em breve</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="settings-row">
+              <div class="settings-row__text">
+                <h4>Zona de risco</h4>
+                <p>Apagar todos os dados cadastrados (pedidos, clientes, financeiro). Produtos e fornecedores padrão são restaurados.</p>
+              </div>
+              <button class="btn btn-danger" id="btnResetDados" type="button">Apagar tudo</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="toast-host" class="toast-host"></div>
+
+</body>
+<script src="core.js"></script>
+<script>
+/* ==========================================================================
+   Este arquivo usa core.js para toda a camada de dados e regras
+   compartilhadas (Store, seed, formatação, cálculo de custo/margem, Toast,
+   modal, tabelas). Só o que é exclusivo do shell do sistema (sidebar,
+   topbar, páginas, gráficos) continua aqui.
+   ========================================================================== */
+
+/* ==========================================================================
+   SHELL DA APLICAÇÃO — sidebar, topbar, modal, toast, tabelas, gráficos
+   ========================================================================== */
+
+const NAV_SECTIONS = [
+  {
+    label: "Operação",
+    items: [
+      { id: "dashboard",   label: "Dashboard",   icon: `<path d="M20 7 12 3 4 7v10l8 4 8-4Z"/><path d="M4 7l8 4 8-4"/>` },
+      { id: "orcamentos",  label: "Orçamentos",  icon: `<path d="M9 12.5 11 15l4-5"/><circle cx="12" cy="12" r="9"/>` },
+      { id: "pedidos",     label: "Pedidos",     icon: `<rect x="3" y="7" width="13" height="12" rx="1.5"/><path d="M16 11h3.2a1 1 0 0 1 .9.6l1.6 3.4v3a1 1 0 0 1-1 1H16"/>` },
+      { id: "clientes",    label: "Clientes",    icon: `<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/>` }
+    ]
+  },
+  {
+    label: "Catálogo",
+    items: [
+      { id: "produtos",     label: "Produtos",     icon: `<path d="M20.5 7.3 12 12l-8.5-4.7M12 12v9M3.5 7.3 12 3l8.5 4.3v9.4L12 21l-8.5-4.3Z"/>` },
+      { id: "fornecedores", label: "Fornecedores", icon: `<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>` },
+      { id: "estoque",      label: "Estoque",      icon: `<path d="M3 9.5 12 4l9 5.5v9L12 24l-9-5.5Z"/><path d="M3 9.5 12 15l9-5.5M12 15v9"/>` }
+    ]
+  },
+  {
+    label: "Gestão",
+    items: [
+      { id: "financeiro", label: "Financeiro", icon: `<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/>` },
+      { id: "custos",     label: "Custos",     icon: `<path d="M3 12h18M3 12a9 9 0 0 0 9 9m-9-9a9 9 0 0 1 9-9m0 18a9 9 0 0 0 9-9m-9 9V3m0 0a9 9 0 0 1 9 9"/>` },
+      { id: "marketing",  label: "Marketing",  icon: `<path d="M3 11 20 4l-3 17-5.5-4.5L8 20l-1-6-4-3Z"/>` },
+      { id: "relatorios", label: "Relatórios", icon: `<path d="M4 19h16M4 19l4-7 4 3 5-9"/>` }
+    ]
+  },
+  {
+    label: "Sistema",
+    items: [
+      { id: "configuracoes", label: "Configurações", icon: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>` }
+    ]
+  }
+];
+
+const PAGE_META = {
+  dashboard:      { title: "Dashboard",      crumb: "Visão geral da empresa" },
+  produtos:       { title: "Produtos",       crumb: "Catálogo, custos e margem de lucro" },
+  fornecedores:   { title: "Fornecedores",   crumb: "Parceiros e fornecedores de insumos" },
+  clientes:       { title: "Clientes",       crumb: "Base de clientes da empresa" },
+  pedidos:        { title: "Pedidos",        crumb: "Acompanhamento de pedidos" },
+  financeiro:     { title: "Financeiro",     crumb: "Receitas, despesas e fluxo de caixa" },
+  custos:         { title: "Custos",         crumb: "Custos reais de fornecedores e logística" },
+  estoque:        { title: "Estoque",        crumb: "Materiais e produtos disponíveis" },
+  marketing:      { title: "Marketing",      crumb: "Aquisição de clientes por canal" },
+  relatorios:     { title: "Relatórios",     crumb: "Análises e relatórios da empresa" },
+  configuracoes:  { title: "Configurações",  crumb: "Preferências do sistema" }
+};
+
+function regMarkSVG(extraClass) {
+  return `<svg class="reg-mark ${extraClass || ""}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><line x1="12" y1="1" x2="12" y2="23"/><line x1="1" y1="12" x2="23" y2="12"/></svg>`;
+}
+
+function renderSidebar(activePage) {
+  const container = document.getElementById("sidebar-container");
+  const pedidosPendentes = Store.get().orders.filter(o => o.status === "aguardando_pagamento").length;
+  const estoqueBaixo = Store.get().stock.filter(s => s.estoqueMinimo != null && s.quantidade <= s.estoqueMinimo).length;
+
+  const sections = NAV_SECTIONS.map(sec => `
+    <div class="sidebar__section-label">${sec.label}</div>
+    ${sec.items.map(item => {
+      let badge = "";
+      if (item.id === "pedidos" && pedidosPendentes > 0) badge = `<span class="nav-item__badge">${pedidosPendentes}</span>`;
+      if (item.id === "estoque" && estoqueBaixo > 0) badge = `<span class="nav-item__badge">${estoqueBaixo}</span>`;
+      return `
+        <button class="nav-item ${item.id === activePage ? "active" : ""}" data-nav="${item.id}" type="button">
+          <svg viewBox="0 0 24 24">${item.icon}</svg>
+          <span class="nav-item__label">${item.label}</span>
+          ${badge}
+        </button>`;
+    }).join("")}
+  `).join("");
+
+  container.innerHTML = `
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        ${regMarkSVG()}
+        <div class="sidebar__brand-text">
+          <span class="sidebar__brand-name">Impressão na Sua Casa</span>
+          <span class="sidebar__brand-sub">Sistema de Gestão</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">${sections}</nav>
+      <div class="sidebar__foot">
+        <div class="sidebar__foot-avatar">A</div>
+        <div class="sidebar__foot-text">
+          <div class="sidebar__foot-name">Administrador</div>
+          <div class="sidebar__foot-role">Acesso completo</div>
+        </div>
+      </div>
+    </aside>
+  `;
+
+  container.querySelectorAll("[data-nav]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const navId = btn.getAttribute("data-nav");
+      if (navId === "orcamentos") { window.location.href = "orcamento.html"; return; }
+      showPage(navId);
+    });
+  });
+}
+
+function renderTopbar(title, crumb) {
+  const container = document.getElementById("topbar-container");
+  container.innerHTML = `
+    <header class="topbar">
+      <div class="topbar__left">
+        <button class="topbar__toggle" id="sidebarToggle" title="Recolher menu" type="button">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="topbar__titles">
+          <div class="topbar__title">${title}</div>
+          <div class="topbar__crumb">${crumb}</div>
+        </div>
+      </div>
+      <div class="topbar__right">
+        <button class="topbar__icon-btn" id="btnQuickBudget" title="Novo orçamento" type="button">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="topbar__icon-btn" title="Notificações" type="button">
+          <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>
+          <span class="dot"></span>
+        </button>
+      </div>
+    </header>
+  `;
+  document.getElementById("sidebarToggle").addEventListener("click", () => {
+    document.body.classList.toggle("sidebar-collapsed");
+  });
+  document.getElementById("btnQuickBudget").addEventListener("click", () => { window.location.href = "orcamento.html"; });
+}
+
+/* ---------- Gráficos inline em SVG (sem bibliotecas externas) ---------- */
+function barChartSVG(data, opts) {
+  opts = opts || {};
+  const w = 640, h = 220, padL = 46, padB = 28, padT = 14, padR = 10;
+  const innerW = w - padL - padR, innerH = h - padT - padB;
+  const max = Math.max(1, ...data.map(d => d.valor));
+  const barW = innerW / data.length;
+  const bars = data.map((d, i) => {
+    const barH = max > 0 ? (d.valor / max) * innerH : 0;
+    const x = padL + i * barW + barW * 0.18;
+    const y = padT + innerH - barH;
+    const bw = barW * 0.64;
+    const color = opts.color || "var(--color-brand-600)";
+    return `
+      <rect class="bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="4" fill="${color}"></rect>
+      <text x="${(x + bw / 2).toFixed(1)}" y="${h - 8}" font-size="10.5" text-anchor="middle">${escapeHtml(d.label)}</text>
+      ${d.valor > 0 ? `<text x="${(x + bw / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="10.5" text-anchor="middle" fill="var(--color-text-700)">${opts.formatValue ? opts.formatValue(d.valor) : d.valor}</text>` : ""}
+    `;
+  }).join("");
+  return `<svg class="bar-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${bars}</svg>`;
+}
+
+function donutChartSVG(data, opts) {
+  opts = opts || {};
+  const total = data.reduce((s, d) => s + d.valor, 0);
+  const size = 180, r = 70, cx = size / 2, cy = size / 2, strokeW = 26;
+  const colors = opts.colors || ["#1B5FAA", "#1FA855", "#B7791F", "#C0392B", "#6E4FC9", "#2C74C4"];
+  if (total <= 0) {
+    return `<div class="chart-placeholder" style="height:180px;"><span>Sem dados cadastrados</span></div>`;
+  }
+  let acc = 0;
+  const circumference = 2 * Math.PI * r;
+  const segments = data.map((d, i) => {
+    const frac = d.valor / total;
+    const dash = frac * circumference;
+    const gap = circumference - dash;
+    const rotate = (acc / total) * 360;
+    acc += d.valor;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="${strokeW}" stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}" transform="rotate(${rotate.toFixed(1)} ${cx} ${cy})"></circle>`;
+  }).join("");
+  const legend = data.map((d, i) => `
+    <div class="donut-legend__item">
+      <span class="donut-legend__dot" style="background:${colors[i % colors.length]};"></span>
+      <span>${escapeHtml(d.label)}</span>
+      <span class="donut-legend__value">${opts.formatValue ? opts.formatValue(d.valor) : d.valor}</span>
+    </div>
+  `).join("");
+  return `
+    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+      <svg viewBox="0 0 ${size} ${size}" style="width:150px; height:150px; flex-shrink:0; transform:rotate(-90deg);">${segments}</svg>
+      <div class="donut-legend" style="margin-top:0; flex:1; min-width:160px;">${legend}</div>
+    </div>
+  `;
+}
+/* ==========================================================================
+   DASHBOARD
+   ========================================================================== */
+
+function filterByPeriodo(dateStr, periodo) {
+  if (periodo === "mes") return isCurrentMonth(dateStr);
+  if (periodo === "30d") return withinPeriod(dateStr, 30);
+  return true; // 'tudo'
+}
+
+function computeDashboardData(periodo) {
+  const db = Store.get();
+  const receitas = db.finance.filter(f => f.tipo === "receita" && filterByPeriodo(f.data, periodo));
+  const despesas = db.finance.filter(f => f.tipo === "despesa" && filterByPeriodo(f.data, periodo));
+  const faturamento = receitas.reduce((s, f) => s + f.valor, 0);
+  const custos = despesas.reduce((s, f) => s + f.valor, 0);
+  const lucro = faturamento - custos;
+  const margemPct = faturamento > 0 ? (lucro / faturamento) * 100 : null;
+
+  const vendasRealizadas = db.orders.filter(o => (o.status === "concluido" || o.statusOp === "entregue") && o.dataConclusao && filterByPeriodo(o.dataConclusao, periodo)).length;
+  const orcamentosGerados = db.budgets.filter(b => filterByPeriodo(b.createdAt, periodo)).length;
+
+  return { faturamento, custos, lucro, margemPct, vendasRealizadas, orcamentosGerados };
+}
+
+function kpiCard({ label, value, icon, tone, isEmpty }) {
+  return `
+    <div class="card kpi-card">
+      <div class="kpi-card__top">
+        <div class="kpi-card__icon ${tone ? "tone-" + tone : ""}"><svg viewBox="0 0 24 24">${icon}</svg></div>
+      </div>
+      <div class="kpi-card__value ${isEmpty ? "muted" : ""}">${value}</div>
+      <div class="kpi-card__label">${label}</div>
+    </div>
+  `;
+}
+
+function renderDashboard() {
+  const db = Store.get();
+  const periodoSel = document.getElementById("dashPeriodo");
+  const periodo = periodoSel ? periodoSel.value : "mes";
+  const d = computeDashboardData(periodo);
+
+  const hasFinance = db.finance.length > 0;
+  const hasOrders = db.orders.length > 0;
+  const hasBudgets = db.budgets.length > 0;
+
+  const kpis = [
+    kpiCard({ label: "Faturamento", value: hasFinance ? formatBRL(d.faturamento) : "Sem dados cadastrados", isEmpty: !hasFinance, tone: "green",
+      icon: `<path d="M12 5v14M5 12h14"/>` }),
+    kpiCard({ label: "Custos", value: hasFinance ? formatBRL(d.custos) : "Sem dados cadastrados", isEmpty: !hasFinance, tone: "amber",
+      icon: `<path d="M5 12h14"/>` }),
+    kpiCard({ label: "Lucro líquido", value: hasFinance ? formatBRL(d.lucro) : "Sem dados cadastrados", isEmpty: !hasFinance, tone: "green",
+      icon: `<path d="M3 17 9 11l4 4 8-8"/><path d="M15 6h6v6"/>` }),
+    kpiCard({ label: "Margem média", value: d.margemPct !== null ? d.margemPct.toFixed(1) + "%" : "Sem dados cadastrados", isEmpty: d.margemPct === null,
+      icon: `<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/>` }),
+    kpiCard({ label: "Vendas realizadas", value: hasOrders ? formatNum(d.vendasRealizadas) : "Sem dados cadastrados", isEmpty: !hasOrders,
+      icon: `<rect x="3" y="7" width="13" height="12" rx="1.5"/><path d="M16 11h3.2a1 1 0 0 1 .9.6l1.6 3.4v3a1 1 0 0 1-1 1H16"/>` }),
+    kpiCard({ label: "Orçamentos gerados", value: hasBudgets ? formatNum(d.orcamentosGerados) : "Sem dados cadastrados", isEmpty: !hasBudgets,
+      icon: `<path d="M9 12.5 11 15l4-5"/><circle cx="12" cy="12" r="9"/>` }),
+    kpiCard({ label: "Produtos cadastrados", value: formatNum(db.products.length), tone: "purple",
+      icon: `<path d="M20.5 7.3 12 12l-8.5-4.7M12 12v9M3.5 7.3 12 3l8.5 4.3v9.4L12 21l-8.5-4.3Z"/>` }),
+    kpiCard({ label: "Clientes cadastrados", value: db.clients.length ? formatNum(db.clients.length) : "Sem dados cadastrados", isEmpty: !db.clients.length,
+      icon: `<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/>` })
+  ];
+  document.getElementById("dashKpis").innerHTML = kpis.join("");
+
+  // Faturamento últimos 6 meses
+  const series = lastNMonthsSeries(6);
+  db.finance.filter(f => f.tipo === "receita").forEach(f => {
+    const item = series.find(s => s.ym === monthKey(f.data));
+    if (item) item.valor += f.valor;
+  });
+  const hasAnyFaturamento = series.some(s => s.valor > 0);
+  document.getElementById("dashFaturamentoChart").innerHTML = hasAnyFaturamento
+    ? barChartSVG(series.map(s => ({ label: s.label, valor: s.valor })), { color: "var(--color-brand-600)", formatValue: v => "R$ " + Math.round(v / (v >= 1000 ? 1000 : 1)) + (v >= 1000 ? "k" : "") })
+    : `<div class="chart-placeholder"><svg viewBox="0 0 24 24"><path d="M4 19h16M4 19l4-7 4 3 5-9"/></svg><span>Sem dados cadastrados — registre receitas no Financeiro para ver o gráfico aqui.</span></div>`;
+
+  // Pedidos recentes
+  const recentes = [...db.orders].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 5);
+  document.getElementById("dashPedidosRecentes").innerHTML = recentes.length
+    ? `<div class="simple-list">${recentes.map(o => {
+        const cliente = getClientById(o.clienteId);
+        const nome = cliente ? cliente.nome : (o.clienteNomeLivre || "Cliente avulso");
+        const iniciais = nome.split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+        const currentOpStatus = o.statusOp || o.status;
+        const stOpMeta = PEDIDO_STATUS_OP[currentOpStatus] || PEDIDO_STATUS_META_LEGADO[currentOpStatus] || { label: currentOpStatus || "—", tone: "gray" };
+        const st = { t: stOpMeta.tone, l: stOpMeta.label };
+        return `
+          <div class="simple-list__item">
+            <div class="simple-list__avatar">${iniciais || "?"}</div>
+            <div class="simple-list__body">
+              <div class="simple-list__title">${escapeHtml(nome)}</div>
+              <div class="simple-list__meta">${escapeHtml(o.produtoNome || "")} · ${formatDateBR(o.createdAt)}</div>
+            </div>
+            <span class="badge tone-${st.t}">${st.l}</span>
+          </div>`;
+      }).join("")}</div>`
+    : emptyStateHtml("Nenhum pedido registrado ainda", "Os pedidos aparecerão aqui assim que forem criados a partir de um orçamento ou manualmente.");
+
+  // Produtos mais vendidos
+  const porProduto = {};
+  db.orders.forEach(o => {
+    if (!o.produtoNome) return;
+    porProduto[o.produtoNome] = porProduto[o.produtoNome] || { qtd: 0, valor: 0 };
+    porProduto[o.produtoNome].qtd += 1;
+    porProduto[o.produtoNome].valor += (o.valor || 0);
+  });
+  const topProdutos = Object.entries(porProduto).sort((a, b) => b[1].valor - a[1].valor).slice(0, 5);
+  document.getElementById("dashTopProdutos").innerHTML = topProdutos.length
+    ? `<div class="simple-list">${topProdutos.map(([nome, v]) => `
+        <div class="simple-list__item">
+          <div class="simple-list__body">
+            <div class="simple-list__title">${escapeHtml(nome)}</div>
+            <div class="simple-list__meta">${v.qtd} pedido${v.qtd > 1 ? "s" : ""}</div>
+          </div>
+          <div class="simple-list__value">${formatBRL(v.valor)}</div>
+        </div>`).join("")}</div>`
+    : emptyStateHtml("Sem dados cadastrados", "Assim que houver pedidos, os produtos mais vendidos aparecerão aqui.");
+
+  // Desempenho de fornecedores
+  const porFornecedor = {};
+  db.orders.forEach(o => {
+    if (!o.fornecedorId) return;
+    porFornecedor[o.fornecedorId] = porFornecedor[o.fornecedorId] || { qtd: 0, custo: 0 };
+    porFornecedor[o.fornecedorId].qtd += 1;
+    porFornecedor[o.fornecedorId].custo += (o.custo || 0);
+  });
+  const topFornecedores = Object.entries(porFornecedor).sort((a, b) => b[1].custo - a[1].custo).slice(0, 5);
+  document.getElementById("dashFornecedores").innerHTML = topFornecedores.length
+    ? `<div class="simple-list">${topFornecedores.map(([fid, v]) => {
+        const f = getSupplierById(fid);
+        return `
+        <div class="simple-list__item">
+          <div class="simple-list__body">
+            <div class="simple-list__title">${escapeHtml(f ? f.nome : "Fornecedor removido")}</div>
+            <div class="simple-list__meta">${v.qtd} pedido${v.qtd > 1 ? "s" : ""}</div>
+          </div>
+          <div class="simple-list__value">${formatBRL(v.custo)}</div>
+        </div>`;
+      }).join("")}</div>`
+    : emptyStateHtml("Sem dados cadastrados", "Assim que houver pedidos ligados a um fornecedor, o desempenho aparecerá aqui.");
+
+  // Alerta de estoque baixo
+  const baixos = db.stock.filter(s => s.estoqueMinimo != null && s.quantidade <= s.estoqueMinimo);
+  document.getElementById("dashEstoqueAlerta").innerHTML = baixos.length
+    ? `<div class="stock-alert-strip">
+        <svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <span>${baixos.length} item${baixos.length > 1 ? "ns" : ""} de estoque abaixo do mínimo — <button class="link-btn" data-nav="estoque">ver estoque</button></span>
+      </div>`
+    : "";
+  const btnEstoqueAlerta = document.querySelector("#dashEstoqueAlerta [data-nav]");
+  if (btnEstoqueAlerta) btnEstoqueAlerta.addEventListener("click", () => showPage("estoque"));
+}
+/* ==========================================================================
+   PRODUTOS
+   ========================================================================== */
+
+function tierTableHtml(tiers, custoKey, vendaKey) {
+  const rows = tiers.map(t => `
+    <tr>
+      <td>${formatNum(t.qtd)} un.</td>
+      <td class="num">${formatBRL(t[custoKey])}</td>
+      <td class="num">${formatBRL(t[vendaKey])}</td>
+      <td>${margemCellHtml(calcularMargem(t[custoKey], t[vendaKey]), Store.get().settings)}</td>
+    </tr>
+  `).join("");
+  return `
+    <table class="data-table" style="margin-top:8px;">
+      <thead><tr><th>Quantidade</th><th>Custo</th><th>Venda</th><th>Lucro / margem</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function faixaTableHtml(faixas) {
+  if (!faixas.length) return `<div class="text-muted" style="margin-top:8px;">Tabela de preços ainda não informada — aguardando cadastro.</div>`;
+  const rows = faixas.map(f => `
+    <tr>
+      <td>${formatNum(f.min)}${f.max === Infinity ? "+" : " a " + formatNum(f.max)}</td>
+      <td class="num">${f.custo !== null ? formatBRL(f.custo) + " /un." : "—"}</td>
+      <td class="num">${f.venda !== null ? formatBRL(f.venda) + " /un." : "—"}</td>
+      <td>${margemCellHtml(calcularMargem(f.custo, f.venda), Store.get().settings)}</td>
+    </tr>
+  `).join("");
+  return `
+    <table class="data-table" style="margin-top:8px;">
+      <thead><tr><th>Faixa de quantidade</th><th>Custo unitário</th><th>Venda unitária</th><th>Lucro / margem</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function materialCardHtml(produto, material) {
+  const fornecedor = getSupplierById(material.fornecedorId);
+  let priceBlock = "";
+  if (produto.modoPreco === "tiers") {
+    priceBlock = tierTableHtml(material.tiers || [], "custoFrente", "vendaFrente");
+    if ((material.tiers || []).some(t => t.custoFV !== undefined)) {
+      priceBlock += `<div class="text-muted" style="margin-top:6px;">Valores acima são para impressão frente. Frente e verso é calculado no orçamento.</div>`;
+    }
+  } else if (produto.modoPreco === "faixas") {
+    priceBlock = faixaTableHtml(material.faixas || []);
+  } else {
+    priceBlock = `
+      <div class="grid-3" style="margin-top:8px;">
+        <div><div class="text-muted">Custo</div><div class="mono" style="font-weight:600;">${formatBRL(material.custo)}</div></div>
+        <div><div class="text-muted">Venda</div><div class="mono" style="font-weight:600;">${formatBRL(material.venda)}</div></div>
+        <div><div class="text-muted">Lucro / margem</div>${margemCellHtml(calcularMargem(material.custo, material.venda), Store.get().settings)}</div>
+      </div>
+      ${material.estoque !== undefined ? `<div class="text-muted" style="margin-top:8px;">Estoque: <strong style="color:var(--color-text-900);">${formatNum(material.estoque)}</strong>${material.estoqueMinimo != null ? " (mínimo: " + formatNum(material.estoqueMinimo) + ")" : ""}</div>` : ""}
+    `;
+  }
+  return `
+    <div class="card card-pad" style="margin-top:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:600; font-size:13.5px;">${escapeHtml(material.nome)}</div>
+          <div class="text-muted" style="margin-top:2px;">
+            ${material.linha ? escapeHtml(material.linha) + " · " : ""}${material.acabamento ? escapeHtml(material.acabamento) + " · " : ""}
+            Fornecedor: ${fornecedor ? escapeHtml(fornecedor.nome) : "Não vinculado"}
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" data-edit-material="${produto.id}|${material.id}" title="Editar material" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="icon-btn danger" data-del-material="${produto.id}|${material.id}" title="Excluir material" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+        </div>
+      </div>
+      ${priceBlock}
+      ${material.observacao ? `<div class="text-muted" style="margin-top:8px;">${escapeHtml(material.observacao)}</div>` : ""}
+    </div>
+  `;
+}
+
+function produtoSectionHtml(produto) {
+  const materiais = (produto.materiais || []).map(m => materialCardHtml(produto, m)).join("");
+  return `
+    <div class="card card-pad" data-produto-card="${produto.id}">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h3 style="font-size:16px;">${escapeHtml(produto.nome)}</h3>
+          <div class="text-muted" style="margin-top:4px;">${escapeHtml(produto.categoria || "Sem categoria")} · ${escapeHtml(produto.prazo || "Prazo não informado")}</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" data-add-material="${produto.id}" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Novo material
+          </button>
+          <button class="btn btn-secondary btn-sm" data-edit-produto="${produto.id}" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar
+          </button>
+          <button class="btn btn-danger btn-sm" data-del-produto="${produto.id}" type="button">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>Excluir
+          </button>
+        </div>
+      </div>
+      ${produto.observacoes ? `<div class="text-muted" style="margin-top:10px;">${escapeHtml(produto.observacoes)}</div>` : ""}
+      ${materiais || `<div class="text-muted" style="margin-top:12px;">Nenhum material cadastrado para este produto ainda.</div>`}
+    </div>
+  `;
+}
+
+function renderProdutos(filtro) {
+  const db = Store.get();
+  filtro = (filtro || "").toLowerCase().trim();
+  let produtos = db.products;
+  if (filtro) {
+    produtos = produtos.filter(p =>
+      p.nome.toLowerCase().includes(filtro) ||
+      (p.materiais || []).some(m => m.nome.toLowerCase().includes(filtro))
+    );
+  }
+  const container = document.getElementById("produtosLista");
+  if (!produtos.length) {
+    container.innerHTML = emptyStateHtml(
+      filtro ? "Nenhum produto encontrado" : "Nenhum produto cadastrado",
+      filtro ? "Tente pesquisar por outro termo." : "Clique em \"Novo produto\" para cadastrar o primeiro."
+    );
+    return;
+  }
+  container.innerHTML = produtos.map(produtoSectionHtml).join("");
+  bindProdutosEvents();
+}
+
+function bindProdutosEvents() {
+  document.querySelectorAll("[data-edit-produto]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioProduto(btn.getAttribute("data-edit-produto"))));
+  document.querySelectorAll("[data-del-produto]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoProduto(btn.getAttribute("data-del-produto"))));
+  document.querySelectorAll("[data-add-material]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioMaterial(btn.getAttribute("data-add-material"), null)));
+  document.querySelectorAll("[data-edit-material]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const [pid, mid] = btn.getAttribute("data-edit-material").split("|");
+      abrirFormularioMaterial(pid, mid);
+    }));
+  document.querySelectorAll("[data-del-material]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const [pid, mid] = btn.getAttribute("data-del-material").split("|");
+      confirmarExclusaoMaterial(pid, mid);
+    }));
+}
+
+function fornecedorOptionsHtml(selectedId) {
+  const suppliers = Store.get().suppliers;
+  return `<option value="">Não vinculado</option>` + suppliers.map(s =>
+    `<option value="${s.id}" ${s.id === selectedId ? "selected" : ""}>${escapeHtml(s.nome)}</option>`).join("");
+}
+
+function abrirFormularioProduto(id) {
+  const produto = id ? getProductById(id) : null;
+  openModal({
+    title: produto ? "Editar produto" : "Novo produto",
+    size: "lg",
+    bodyHtml: `
+      <div class="field-row">
+        <div class="field"><label>Nome do produto</label><input id="fProdNome" value="${escapeHtml(produto ? produto.nome : "")}" placeholder="Ex: Banner Lona"></div>
+        <div class="field"><label>Categoria</label><input id="fProdCategoria" value="${escapeHtml(produto ? produto.categoria : "")}" placeholder="Ex: Comunicação visual"></div>
+      </div>
+      <div class="field"><label>Prazo de produção</label><input id="fProdPrazo" value="${escapeHtml(produto ? produto.prazo : "")}" placeholder="Ex: 5 a 8 dias úteis"></div>
+      ${!produto ? `
+      <div class="field">
+        <label>Modo de precificação</label>
+        <select id="fProdModo">
+          <option value="simples">Simples (um custo e um preço de venda fixos, com estoque)</option>
+          <option value="faixas">Por faixa de quantidade (ex: impressão avulsa)</option>
+          <option value="tiers">Por quantidade fechada (ex: lotes de 500, 1000, 5000)</option>
+        </select>
+        <div class="hint">Você poderá cadastrar os materiais e valores logo após criar o produto.</div>
+      </div>` : ""}
+      <div class="field"><label>Observações</label><textarea id="fProdObs" placeholder="Observações internas sobre o produto">${escapeHtml(produto ? (produto.observacoes || "") : "")}</textarea></div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const nome = document.getElementById("fProdNome").value.trim();
+        if (!nome) { Toast.show("Informe o nome do produto.", "error"); return; }
+        const db = Store.get();
+        if (produto) {
+          produto.nome = nome;
+          produto.categoria = document.getElementById("fProdCategoria").value.trim();
+          produto.prazo = document.getElementById("fProdPrazo").value.trim();
+          produto.observacoes = document.getElementById("fProdObs").value.trim();
+        } else {
+          const modo = document.getElementById("fProdModo").value;
+          db.products.push({
+            id: uid("prod"),
+            nome,
+            categoria: document.getElementById("fProdCategoria").value.trim(),
+            prazo: document.getElementById("fProdPrazo").value.trim(),
+            modoPreco: modo,
+            qtdMinima: modo === "faixas" ? 1 : undefined,
+            observacoes: document.getElementById("fProdObs").value.trim(),
+            materiais: []
+          });
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(produto ? "Produto atualizado." : "Produto criado. Agora cadastre um material com os valores.");
+        renderProdutos(document.getElementById("produtoSearch").value);
+        refreshSidebarBadges();
+      });
+    }
+  });
+}
+
+function confirmarExclusaoProduto(id) {
+  const produto = getProductById(id);
+  if (!produto) return;
+  confirmModal(
+    "Excluir produto",
+    `Tem certeza que deseja excluir <strong>${escapeHtml(produto.nome)}</strong>? Essa ação não pode ser desfeita. Orçamentos e pedidos já criados não serão apagados.`,
+    () => {
+      const db = Store.get();
+      db.products = db.products.filter(p => p.id !== id);
+      Store.persist();
+      Toast.show("Produto excluído.");
+      renderProdutos(document.getElementById("produtoSearch").value);
+    },
+    "Excluir"
+  );
+}
+
+function abrirFormularioMaterial(produtoId, materialId) {
+  const produto = getProductById(produtoId);
+  if (!produto) return;
+  const material = materialId ? produto.materiais.find(m => m.id === materialId) : null;
+
+  let priceFieldsHtml = "";
+  if (produto.modoPreco === "simples") {
+    priceFieldsHtml = `
+      <div class="field-row-3">
+        <div class="field"><label>Custo (fornecedor)</label><input type="number" step="0.01" id="fMatCusto" value="${material ? material.custo : ""}" placeholder="0,00"></div>
+        <div class="field"><label>Preço de venda</label><input type="number" step="0.01" id="fMatVenda" value="${material ? material.venda : ""}" placeholder="0,00"></div>
+        <div class="field"><label>Estoque atual</label><input type="number" id="fMatEstoque" value="${material && material.estoque !== undefined ? material.estoque : ""}" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Estoque mínimo (alerta)</label><input type="number" id="fMatEstoqueMin" value="${material && material.estoqueMinimo != null ? material.estoqueMinimo : ""}" placeholder="Opcional"></div>
+    `;
+  } else if (produto.modoPreco === "faixas") {
+    const faixas = material ? material.faixas : [];
+    priceFieldsHtml = `
+      <div class="field">
+        <label>Faixas de quantidade (uma por linha: min,max,custo,venda — use "inf" para sem limite, deixe custo/venda em branco se não cadastrado)</label>
+        <textarea id="fMatFaixas" style="min-height:110px; font-family:var(--font-mono); font-size:12.5px;" placeholder="20,30,0.90,1.90&#10;31,50,0.70,1.75&#10;501,inf,0.22,0.65">${faixas.map(f => [f.min, f.max === Infinity ? "inf" : f.max, f.custo === null ? "" : f.custo, f.venda === null ? "" : f.venda].join(",")).join("\n")}</textarea>
+        <div class="hint">Formato: quantidade mínima, quantidade máxima, custo unitário, venda unitária.</div>
+      </div>
+    `;
+  } else {
+    const tiers = material ? material.tiers : [];
+    priceFieldsHtml = `
+      <div class="field">
+        <label>Quantidades (uma por linha: qtd,custoFrente,custoFrenteVerso,vendaFrente,vendaFrenteVerso — deixe em branco o que não tiver)</label>
+        <textarea id="fMatTiers" style="min-height:110px; font-family:var(--font-mono); font-size:12.5px;" placeholder="500,43.99,54.99,89.90,109.90&#10;1000,57.99,65.99,129.90,149.90">${tiers.map(t => [t.qtd, t.custoFrente ?? "", t.custoFV ?? "", t.vendaFrente ?? "", t.vendaFV ?? ""].join(",")).join("\n")}</textarea>
+        <div class="hint">Formato: quantidade, custo frente, custo frente e verso, venda frente, venda frente e verso.</div>
+      </div>
+    `;
+  }
+
+  openModal({
+    title: material ? "Editar material" : "Novo material — " + produto.nome,
+    size: "lg",
+    bodyHtml: `
+      <div class="field-row">
+        <div class="field"><label>Nome do material</label><input id="fMatNome" value="${escapeHtml(material ? material.nome : "")}" placeholder="Ex: Couchê Brilho 250g"></div>
+        <div class="field"><label>Linha / acabamento</label><input id="fMatLinha" value="${escapeHtml(material ? material.linha : "")}" placeholder="Ex: Linha Premium"></div>
+      </div>
+      <div class="field">
+        <label>Fornecedor</label>
+        <select id="fMatFornecedor">${fornecedorOptionsHtml(material ? material.fornecedorId : null)}</select>
+      </div>
+      ${priceFieldsHtml}
+      <div class="field"><label>Observação (opcional)</label><input id="fMatObs" value="${escapeHtml(material ? (material.observacao || "") : "")}" placeholder="Ex: aguardando tabela de preço do fornecedor"></div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const nome = document.getElementById("fMatNome").value.trim();
+        if (!nome) { Toast.show("Informe o nome do material.", "error"); return; }
+        const base = {
+          id: material ? material.id : uid("mat"),
+          nome,
+          linha: document.getElementById("fMatLinha").value.trim(),
+          acabamento: material ? material.acabamento : "",
+          fornecedorId: document.getElementById("fMatFornecedor").value || null,
+          linkFornecedor: material ? material.linkFornecedor : "",
+          observacao: document.getElementById("fMatObs").value.trim()
+        };
+
+        if (produto.modoPreco === "simples") {
+          const custoStr = document.getElementById("fMatCusto").value;
+          const vendaStr = document.getElementById("fMatVenda").value;
+          base.custo = custoStr === "" ? null : parseFloat(custoStr);
+          base.venda = vendaStr === "" ? null : parseFloat(vendaStr);
+          const estStr = document.getElementById("fMatEstoque").value;
+          base.estoque = estStr === "" ? 0 : parseInt(estStr, 10);
+          const estMinStr = document.getElementById("fMatEstoqueMin").value;
+          base.estoqueMinimo = estMinStr === "" ? null : parseInt(estMinStr, 10);
+        } else if (produto.modoPreco === "faixas") {
+          const lines = document.getElementById("fMatFaixas").value.split("\n").map(l => l.trim()).filter(Boolean);
+          base.faixas = lines.map(l => {
+            const [min, max, custo, venda] = l.split(",").map(s => s.trim());
+            return {
+              min: parseFloat(min), max: max.toLowerCase() === "inf" ? Infinity : parseFloat(max),
+              custo: custo === "" || custo === undefined ? null : parseFloat(custo),
+              venda: venda === "" || venda === undefined ? null : parseFloat(venda)
+            };
+          });
+        } else {
+          const lines = document.getElementById("fMatTiers").value.split("\n").map(l => l.trim()).filter(Boolean);
+          base.tiers = lines.map(l => {
+            const [qtd, cf, cfv, vf, vfv] = l.split(",").map(s => s.trim());
+            return {
+              qtd: parseFloat(qtd),
+              custoFrente: cf === "" || cf === undefined ? null : parseFloat(cf),
+              custoFV: cfv === "" || cfv === undefined ? null : parseFloat(cfv),
+              vendaFrente: vf === "" || vf === undefined ? null : parseFloat(vf),
+              vendaFV: vfv === "" || vfv === undefined ? null : parseFloat(vfv)
+            };
+          });
+        }
+
+        if (material) {
+          Object.assign(material, base);
+        } else {
+          produto.materiais = produto.materiais || [];
+          produto.materiais.push(base);
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(material ? "Material atualizado." : "Material adicionado.");
+        renderProdutos(document.getElementById("produtoSearch").value);
+      });
+    }
+  });
+}
+
+function confirmarExclusaoMaterial(produtoId, materialId) {
+  const produto = getProductById(produtoId);
+  if (!produto) return;
+  const material = produto.materiais.find(m => m.id === materialId);
+  if (!material) return;
+  confirmModal(
+    "Excluir material",
+    `Tem certeza que deseja excluir o material <strong>${escapeHtml(material.nome)}</strong>?`,
+    () => {
+      produto.materiais = produto.materiais.filter(m => m.id !== materialId);
+      Store.persist();
+      Toast.show("Material excluído.");
+      renderProdutos(document.getElementById("produtoSearch").value);
+    },
+    "Excluir"
+  );
+}
+/* ==========================================================================
+   FORNECEDORES
+   ========================================================================== */
+
+function produtosDoFornecedorHtml(fornecedorId) {
+  const items = [];
+  Store.get().products.forEach(p => {
+    (p.materiais || []).forEach(m => {
+      if (m.fornecedorId === fornecedorId) items.push(`${p.nome} — ${m.nome}`);
+    });
+  });
+  if (!items.length) return `<div class="text-muted">Nenhum produto vinculado a este fornecedor ainda.</div>`;
+  return `<ul style="margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px;">${items.map(i => `<li style="font-size:12.5px; color:var(--color-text-700);">${escapeHtml(i)}</li>`).join("")}</ul>`;
+}
+
+function fornecedorCardHtml(f) {
+  const count = countProdutosDoFornecedor(f.id);
+  return `
+    <div class="card card-pad" data-fornecedor-card="${f.id}">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div>
+          <h3 style="font-size:15px;">${escapeHtml(f.nome)}</h3>
+          <span class="badge tone-blue" style="margin-top:6px;">${escapeHtml(f.categoria || "Sem categoria")}</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" data-edit-fornecedor="${f.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="icon-btn danger" data-del-fornecedor="${f.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+        </div>
+      </div>
+      <div class="divider" style="margin:14px 0;"></div>
+      <div class="grid-2" style="gap:10px;">
+        <div><div class="text-muted">CNPJ</div><div style="font-size:13px;">${escapeHtml(f.cnpj || "—")}</div></div>
+        <div><div class="text-muted">Telefone / WhatsApp</div><div style="font-size:13px;">${escapeHtml(f.whatsapp || f.telefone || "—")}</div></div>
+        <div><div class="text-muted">Prazo de entrega</div><div style="font-size:13px;">${escapeHtml(f.prazoEntrega || "—")}</div></div>
+        <div><div class="text-muted">Frete</div><div style="font-size:13px;">${escapeHtml(f.custoFrete || "—")}</div></div>
+      </div>
+      ${f.site ? `<div style="margin-top:10px;"><div class="text-muted">Site</div><div style="font-size:13px;">${escapeHtml(f.site)}</div></div>` : ""}
+      ${f.observacoes ? `<div style="margin-top:10px;"><div class="text-muted">Observações</div><div style="font-size:13px;">${escapeHtml(f.observacoes)}</div></div>` : ""}
+      <div class="divider" style="margin:14px 0;"></div>
+      <div class="text-muted" style="margin-bottom:6px;">Produtos fornecidos (${count})</div>
+      ${produtosDoFornecedorHtml(f.id)}
+    </div>
+  `;
+}
+
+function renderFornecedores(filtro) {
+  filtro = (filtro || "").toLowerCase().trim();
+  let fornecedores = Store.get().suppliers;
+  if (filtro) {
+    fornecedores = fornecedores.filter(f =>
+      f.nome.toLowerCase().includes(filtro) ||
+      (f.cnpj || "").toLowerCase().includes(filtro) ||
+      (f.categoria || "").toLowerCase().includes(filtro)
+    );
+  }
+  const grid = document.getElementById("fornecedoresGrid");
+  if (!fornecedores.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;">${emptyStateHtml(
+      filtro ? "Nenhum fornecedor encontrado" : "Nenhum fornecedor cadastrado",
+      filtro ? "Tente pesquisar por outro termo." : "Clique em \"Novo fornecedor\" para cadastrar o primeiro."
+    )}</div>`;
+    return;
+  }
+  grid.innerHTML = fornecedores.map(fornecedorCardHtml).join("");
+  document.querySelectorAll("[data-edit-fornecedor]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioFornecedor(btn.getAttribute("data-edit-fornecedor"))));
+  document.querySelectorAll("[data-del-fornecedor]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoFornecedor(btn.getAttribute("data-del-fornecedor"))));
+}
+
+function abrirFormularioFornecedor(id) {
+  const f = id ? getSupplierById(id) : null;
+  openModal({
+    title: f ? "Editar fornecedor" : "Novo fornecedor",
+    size: "lg",
+    bodyHtml: `
+      <div class="field-row">
+        <div class="field"><label>Nome do fornecedor</label><input id="fFornNome" value="${escapeHtml(f ? f.nome : "")}" placeholder="Ex: FuturaIM"></div>
+        <div class="field"><label>Categoria</label><input id="fFornCategoria" value="${escapeHtml(f ? f.categoria : "")}" placeholder="Ex: Materiais gráficos"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>CNPJ</label><input id="fFornCnpj" value="${escapeHtml(f ? f.cnpj : "")}" placeholder="00.000.000/0000-00"></div>
+        <div class="field"><label>Telefone / WhatsApp</label><input id="fFornWhats" value="${escapeHtml(f ? f.whatsapp : "")}" placeholder="(11) 90000-0000"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Prazo de entrega</label><input id="fFornPrazo" value="${escapeHtml(f ? f.prazoEntrega : "")}" placeholder="Ex: 4 a 7 dias úteis"></div>
+        <div class="field"><label>Frete</label><input id="fFornFrete" value="${escapeHtml(f ? f.custoFrete : "")}" placeholder="Ex: Grátis acima de R$ 200"></div>
+      </div>
+      <div class="field"><label>Site</label><input id="fFornSite" value="${escapeHtml(f ? f.site : "")}" placeholder="site.com.br"></div>
+      <div class="field"><label>Observações</label><textarea id="fFornObs" placeholder="Observações internas">${escapeHtml(f ? (f.observacoes || "") : "")}</textarea></div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const nome = document.getElementById("fFornNome").value.trim();
+        if (!nome) { Toast.show("Informe o nome do fornecedor.", "error"); return; }
+        const db = Store.get();
+        const data = {
+          nome,
+          categoria: document.getElementById("fFornCategoria").value.trim(),
+          cnpj: document.getElementById("fFornCnpj").value.trim(),
+          telefone: document.getElementById("fFornWhats").value.trim(),
+          whatsapp: document.getElementById("fFornWhats").value.trim(),
+          prazoEntrega: document.getElementById("fFornPrazo").value.trim(),
+          custoFrete: document.getElementById("fFornFrete").value.trim(),
+          site: document.getElementById("fFornSite").value.trim(),
+          observacoes: document.getElementById("fFornObs").value.trim()
+        };
+        if (f) {
+          Object.assign(f, data);
+        } else {
+          db.suppliers.push(Object.assign({ id: uid("forn") }, data));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(f ? "Fornecedor atualizado." : "Fornecedor cadastrado.");
+        renderFornecedores(document.getElementById("fornecedorSearch").value);
+      });
+    }
+  });
+}
+
+function confirmarExclusaoFornecedor(id) {
+  const f = getSupplierById(id);
+  if (!f) return;
+  const count = countProdutosDoFornecedor(id);
+  confirmModal(
+    "Excluir fornecedor",
+    `Tem certeza que deseja excluir <strong>${escapeHtml(f.nome)}</strong>?${count ? ` Este fornecedor está vinculado a ${count} material(is) de produto — o vínculo ficará "não vinculado".` : ""}`,
+    () => {
+      const db = Store.get();
+      db.suppliers = db.suppliers.filter(s => s.id !== id);
+      db.products.forEach(p => (p.materiais || []).forEach(m => { if (m.fornecedorId === id) m.fornecedorId = null; }));
+      Store.persist();
+      Toast.show("Fornecedor excluído.");
+      renderFornecedores(document.getElementById("fornecedorSearch").value);
+    },
+    "Excluir"
+  );
+}
+/* ==========================================================================
+   CLIENTES
+   ========================================================================== */
+
+function clienteStats(clienteId) {
+  const db = Store.get();
+  const orcamentos = db.budgets.filter(b => b.clienteId === clienteId);
+  const pedidos = db.orders.filter(o => o.clienteId === clienteId);
+  const valorGasto = pedidos.filter(o => o.status === "concluido" || o.statusOp === "entregue").reduce((s, o) => s + (o.valor || 0), 0);
+  return { totalOrcamentos: orcamentos.length, totalPedidos: pedidos.length, valorGasto };
+}
+
+function renderClientes(filtro) {
+  filtro = (filtro || "").toLowerCase().trim();
+  const db = Store.get();
+  let clientes = db.clients;
+  if (filtro) {
+    clientes = clientes.filter(c => c.nome.toLowerCase().includes(filtro) || (c.whatsapp || "").includes(filtro));
+  }
+  const container = document.getElementById("clientesTabela");
+  if (!clientes.length) {
+    container.innerHTML = reusableTable(
+      ["Cliente", "WhatsApp", "Orçamentos", "Pedidos", "Total gasto", ""],
+      filtro ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado ainda",
+      filtro ? "Tente pesquisar por outro termo." : "Clique em \"Novo cliente\" para começar a construir sua base."
+    );
+    return;
+  }
+  const rows = clientes.map(c => {
+    const stats = clienteStats(c.id);
+    return `
+      <tr>
+        <td><strong style="color:var(--color-text-900);">${escapeHtml(c.nome)}</strong>${c.endereco ? `<div class="text-muted">${escapeHtml(c.endereco)}</div>` : ""}</td>
+        <td>${escapeHtml(c.whatsapp || "—")}</td>
+        <td class="num">${formatNum(stats.totalOrcamentos)}</td>
+        <td class="num">${formatNum(stats.totalPedidos)}</td>
+        <td class="num">${stats.valorGasto > 0 ? formatBRL(stats.valorGasto) : "—"}</td>
+        <td>
+          <div class="row-actions">
+            ${c.whatsapp ? `<a class="icon-btn" href="https://wa.me/55${c.whatsapp.replace(/\D/g,"")}" target="_blank" title="WhatsApp"><svg viewBox="0 0 24 24"><path d="M4 20l1.4-4.1A8 8 0 1 1 9 18.6Z"/><path d="M9 10.5c0 3 2.5 5.5 5.5 5.5"/></svg></a>` : ""}
+            <button class="icon-btn" data-edit-cliente="${c.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button class="icon-btn danger" data-del-cliente="${c.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+  container.innerHTML = dataTable(["Cliente", "WhatsApp", "Orçamentos", "Pedidos", "Total gasto", ""], [rows]);
+  document.querySelectorAll("[data-edit-cliente]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioCliente(btn.getAttribute("data-edit-cliente"))));
+  document.querySelectorAll("[data-del-cliente]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoCliente(btn.getAttribute("data-del-cliente"))));
+}
+
+function abrirFormularioCliente(id) {
+  const c = id ? getClientById(id) : null;
+  openModal({
+    title: c ? "Editar cliente" : "Novo cliente",
+    bodyHtml: `
+      <div class="field"><label>Nome completo</label><input id="fCliNome" value="${escapeHtml(c ? c.nome : "")}" placeholder="Ex: Mariana Prado"></div>
+      <div class="field"><label>WhatsApp</label><input id="fCliWhats" value="${escapeHtml(c ? c.whatsapp : "")}" placeholder="(13) 90000-0000"></div>
+      <div class="field"><label>Endereço de entrega</label><input id="fCliEndereco" value="${escapeHtml(c ? c.endereco : "")}" placeholder="Bairro, cidade"></div>
+      <div class="field"><label>Observações</label><textarea id="fCliObs" placeholder="Preferências, histórico, etc.">${escapeHtml(c ? (c.observacoes || "") : "")}</textarea></div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const nome = document.getElementById("fCliNome").value.trim();
+        if (!nome) { Toast.show("Informe o nome do cliente.", "error"); return; }
+        const db = Store.get();
+        const data = {
+          nome,
+          whatsapp: document.getElementById("fCliWhats").value.trim(),
+          endereco: document.getElementById("fCliEndereco").value.trim(),
+          observacoes: document.getElementById("fCliObs").value.trim()
+        };
+        if (c) {
+          Object.assign(c, data);
+        } else {
+          db.clients.push(Object.assign({ id: uid("cli"), createdAt: todayISO() }, data));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(c ? "Cliente atualizado." : "Cliente cadastrado.");
+        renderClientes(document.getElementById("clienteSearch").value);
+      });
+    }
+  });
+}
+
+function confirmarExclusaoCliente(id) {
+  const c = getClientById(id);
+  if (!c) return;
+  confirmModal(
+    "Excluir cliente",
+    `Tem certeza que deseja excluir <strong>${escapeHtml(c.nome)}</strong>? Orçamentos e pedidos já registrados permanecerão, mas sem vínculo com este cliente.`,
+    () => {
+      const db = Store.get();
+      db.clients = db.clients.filter(x => x.id !== id);
+      Store.persist();
+      Toast.show("Cliente excluído.");
+      renderClientes(document.getElementById("clienteSearch").value);
+    },
+    "Excluir"
+  );
+}
+/* ==========================================================================
+   PEDIDOS
+   ========================================================================== */
+
+// Status operacional — produção e entrega
+const PEDIDO_STATUS_OP = {
+  orcamento_criado:      { label: "Orçamento criado",       tone: "gray"   },
+  aguardando_aprovacao:  { label: "Aguardando aprovação",   tone: "blue"   },
+  pedido_confirmado:     { label: "Pedido confirmado",      tone: "blue"   },
+  em_producao:           { label: "Em produção",            tone: "amber"  },
+  producao_finalizada:   { label: "Produção finalizada",    tone: "amber"  },
+  saiu_para_entrega:     { label: "Saiu para entrega",      tone: "purple" },
+  entregue:              { label: "Entregue",               tone: "green"  },
+  cancelado:             { label: "Cancelado",              tone: "red"    }
+};
+
+// Status financeiro — pagamento
+const PEDIDO_STATUS_FIN = {
+  nao_pago:             { label: "Não pago",              tone: "red"    },
+  pagamento_pendente:   { label: "Pagamento pendente",    tone: "amber"  },
+  pago:                 { label: "Pago",                  tone: "green"  },
+  confirmado:           { label: "Confirmado",            tone: "green"  }
+};
+
+// Alias de compatibilidade para banco antigo (status único legado)
+const PEDIDO_STATUS_META_LEGADO = {
+  aguardando_pagamento: { label: "Aguardando pagamento", tone: "blue"  },
+  em_producao:          { label: "Em produção",          tone: "amber" },
+  concluido:            { label: "Concluído",            tone: "green" },
+  cancelado:            { label: "Cancelado",            tone: "red"   }
+};
+
+function statusOpLabel(pedido) {
+  const s = pedido.statusOp || pedido.status;
+  return PEDIDO_STATUS_OP[s] || PEDIDO_STATUS_META_LEGADO[s] || { label: s || "—", tone: "gray" };
+}
+function statusFinLabel(pedido) {
+  const s = pedido.statusFin;
+  if (!s) {
+    // Compatibilidade: deduzir status financeiro do status legado
+    if (pedido.status === "concluido") return PEDIDO_STATUS_FIN["pago"];
+    if (pedido.status === "aguardando_pagamento") return PEDIDO_STATUS_FIN["nao_pago"];
+    return PEDIDO_STATUS_FIN["nao_pago"];
+  }
+  return PEDIDO_STATUS_FIN[s] || { label: s, tone: "gray" };
+}
+
+let pedidoFiltroAtual = "todos";
+
+function gerarLancamentosFinanceirosDoPedido(pedido) {
+  const db = Store.get();
+  if (pedido.financeGerado) return;
+  if (pedido.valor != null) {
+    db.finance.push({
+      id: uid("fin"), tipo: "receita", categoria: "Vendas",
+      descricao: `Recebimento — Pedido ${pedido.produtoNome || ""}`.trim(),
+      valor: pedido.valor, data: pedido.dataConclusao || todayISO(),
+      origem: "pedido", pedidoId: pedido.id
+    });
+  }
+  if (pedido.custo != null) {
+    db.finance.push({
+      id: uid("fin"), tipo: "despesa", categoria: "Fornecedores",
+      descricao: `Custo de produção — Pedido ${pedido.produtoNome || ""}`.trim(),
+      valor: pedido.custo, data: pedido.dataConclusao || todayISO(),
+      origem: "pedido", pedidoId: pedido.id
+    });
+  }
+  pedido.financeGerado = true;
+}
+
+function renderPedidos() {
+  const db = Store.get();
+  let pedidos = [...db.orders].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+  // Filtro por status operacional
+  if (pedidoFiltroAtual !== "todos") {
+    pedidos = pedidos.filter(o => {
+      const opStatus = o.statusOp || o.status;
+      return opStatus === pedidoFiltroAtual;
+    });
+  }
+
+  const container = document.getElementById("pedidosLista");
+  if (!pedidos.length) {
+    container.innerHTML = reusableTable(
+      ["Cliente", "Produto", "Fornecedor", "Custo", "Valor", "Produção", "Pagamento", "Data", ""],
+      db.orders.length ? "Nenhum pedido nesse status" : "Nenhum pedido registrado ainda",
+      db.orders.length ? "Escolha outro filtro acima." : "Pedidos são criados a partir de um orçamento aceito, ou manualmente pelo botão \"Novo pedido\"."
+    );
+    return;
+  }
+
+  const optionsOp = Object.entries(PEDIDO_STATUS_OP).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("");
+  const optionsFin = Object.entries(PEDIDO_STATUS_FIN).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("");
+
+  const rows = pedidos.map(o => {
+    const cliente = getClientById(o.clienteId);
+    const nomeCliente = cliente ? cliente.nome : (o.clienteNomeLivre || "Cliente avulso");
+    const fornecedor = getSupplierById(o.fornecedorId);
+    const stOp = statusOpLabel(o);
+    const stFin = statusFinLabel(o);
+    const currentOpKey = o.statusOp || o.status || "pedido_confirmado";
+    const currentFinKey = o.statusFin || "nao_pago";
+    return `
+      <tr>
+        <td><strong style="color:var(--color-text-900);">${escapeHtml(nomeCliente)}</strong></td>
+        <td>${escapeHtml(o.produtoNome || "—")}${o.materialNome ? `<div class="text-muted">${escapeHtml(o.materialNome)}</div>` : ""}</td>
+        <td>${fornecedor ? escapeHtml(fornecedor.nome) : "—"}</td>
+        <td class="num">${formatBRL(o.custo)}</td>
+        <td class="num">${formatBRL(o.valor)}</td>
+        <td>
+          <select data-status-op="${o.id}" style="border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:6px 8px; font-size:12.5px; background:var(--color-white);">
+            ${Object.entries(PEDIDO_STATUS_OP).map(([k, v]) => `<option value="${k}" ${k === currentOpKey ? "selected" : ""}>${v.label}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <select data-status-fin="${o.id}" style="border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:6px 8px; font-size:12.5px; background:var(--color-white);">
+            ${Object.entries(PEDIDO_STATUS_FIN).map(([k, v]) => `<option value="${k}" ${k === currentFinKey ? "selected" : ""}>${v.label}</option>`).join("")}
+          </select>
+        </td>
+        <td>${formatDateBR(o.createdAt)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn danger" data-del-pedido="${o.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  container.innerHTML = dataTable(["Cliente", "Produto", "Fornecedor", "Custo", "Valor", "Produção", "Pagamento", "Data", ""], [rows]);
+
+  // Listener: status operacional
+  document.querySelectorAll("[data-status-op]").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const pedido = db.orders.find(o => o.id === sel.getAttribute("data-status-op"));
+      if (!pedido) return;
+      pedido.statusOp = sel.value;
+      // Manter campo legado compatível
+      if (sel.value === "entregue") pedido.status = "concluido";
+      else if (sel.value === "cancelado") pedido.status = "cancelado";
+      else pedido.status = sel.value;
+      if (sel.value === "entregue") {
+        pedido.dataConclusao = pedido.dataConclusao || todayISO();
+      }
+      Store.persist();
+      Toast.show("Status de produção atualizado.");
+      refreshSidebarBadges();
+    });
+  });
+
+  // Listener: status financeiro
+  document.querySelectorAll("[data-status-fin]").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const pedido = db.orders.find(o => o.id === sel.getAttribute("data-status-fin"));
+      if (!pedido) return;
+      pedido.statusFin = sel.value;
+      // Gerar lançamento financeiro quando pagamento confirmado e ainda não gerado
+      if ((sel.value === "pago" || sel.value === "confirmado") && !pedido.financeGerado) {
+        pedido.dataConclusao = pedido.dataConclusao || todayISO();
+        gerarLancamentosFinanceirosDoPedido(pedido);
+        Toast.show("Pagamento confirmado — lançamentos gerados no Financeiro automaticamente.");
+      } else {
+        Toast.show("Status de pagamento atualizado.");
+      }
+      Store.persist();
+      refreshSidebarBadges();
+    });
+  });
+
+  document.querySelectorAll("[data-del-pedido]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-del-pedido");
+      confirmModal("Excluir pedido", "Tem certeza que deseja excluir este pedido? Lançamentos financeiros gerados por ele não serão removidos automaticamente.", () => {
+        db.orders = db.orders.filter(o => o.id !== id);
+        Store.persist();
+        Toast.show("Pedido excluído.");
+        renderPedidos();
+        refreshSidebarBadges();
+      }, "Excluir");
+    });
+  });
+}
+
+function abrirFormularioPedido() {
+  openModal({
+    title: "Novo pedido",
+    size: "lg",
+    bodyHtml: `
+      <div class="field">
+        <label>Cliente</label>
+        <select id="fPedCliente">${clienteOptionsHtml(null)}</select>
+      </div>
+      <div class="field" id="fPedClienteAvulsoWrap"><label>Nome do cliente avulso</label><input id="fPedClienteAvulso" placeholder="Ex: Ricardo Castro"></div>
+      <div class="field-row">
+        <div class="field"><label>Produto / descrição</label><input id="fPedProduto" placeholder="Ex: Cartão de Visita — 1000 un."></div>
+        <div class="field"><label>Fornecedor</label><select id="fPedFornecedor">${fornecedorOptionsHtml(null)}</select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Custo total</label><input type="number" step="0.01" id="fPedCusto" placeholder="0,00"></div>
+        <div class="field"><label>Valor de venda</label><input type="number" step="0.01" id="fPedValor" placeholder="0,00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Status de produção</label>
+          <select id="fPedStatusOp">
+            ${Object.entries(PEDIDO_STATUS_OP).map(([k,v]) => `<option value="${k}" ${k==="pedido_confirmado"?"selected":""}>${v.label}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label>Status de pagamento</label>
+          <select id="fPedStatusFin">
+            ${Object.entries(PEDIDO_STATUS_FIN).map(([k,v]) => `<option value="${k}" ${k==="nao_pago"?"selected":""}>${v.label}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Criar pedido</button>
+    `,
+    onOpen: () => {
+      const clienteSel = document.getElementById("fPedCliente");
+      const avulsoWrap = document.getElementById("fPedClienteAvulsoWrap");
+      const syncAvulso = () => { avulsoWrap.style.display = clienteSel.value ? "none" : "flex"; };
+      clienteSel.addEventListener("change", syncAvulso);
+      syncAvulso();
+
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const produtoNome = document.getElementById("fPedProduto").value.trim();
+        if (!produtoNome) { Toast.show("Descreva o produto do pedido.", "error"); return; }
+        const db = Store.get();
+        const custoStr = document.getElementById("fPedCusto").value;
+        const valorStr = document.getElementById("fPedValor").value;
+        const statusOp = document.getElementById("fPedStatusOp").value;
+        const statusFin = document.getElementById("fPedStatusFin").value;
+        const pedido = {
+          id: uid("ped"),
+          clienteId: clienteSel.value || null,
+          clienteNomeLivre: clienteSel.value ? "" : document.getElementById("fPedClienteAvulso").value.trim(),
+          produtoNome,
+          materialNome: "",
+          fornecedorId: document.getElementById("fPedFornecedor").value || null,
+          custo: custoStr === "" ? null : parseFloat(custoStr),
+          valor: valorStr === "" ? null : parseFloat(valorStr),
+          statusOp,
+          statusFin,
+          status: statusOp, // compatibilidade legada
+          createdAt: todayISO(),
+          dataConclusao: statusOp === "entregue" ? todayISO() : null,
+          financeGerado: false
+        };
+        db.orders.push(pedido);
+        if (statusFin === "pago" || statusFin === "confirmado") {
+          pedido.dataConclusao = pedido.dataConclusao || todayISO();
+          gerarLancamentosFinanceirosDoPedido(pedido);
+        }
+        Store.persist();
+        closeModal();
+        Toast.show("Pedido criado.");
+        renderPedidos();
+        refreshSidebarBadges();
+      });
+    }
+  });
+}
+/* ==========================================================================
+   FINANCEIRO
+   ========================================================================== */
+
+const DESPESA_CATEGORIAS = ["Fornecedores", "Frete", "Anúncios", "Ferramentas", "Impostos", "Custos fixos", "Outros"];
+const RECEITA_CATEGORIAS = ["Vendas", "Outros"];
+
+let financeiroFiltroAtual = "todos";
+
+function renderFinanceiroKpis() {
+  const db = Store.get();
+  const hasData = db.finance.length > 0;
+  const receitasMes = db.finance.filter(f => f.tipo === "receita" && isCurrentMonth(f.data)).reduce((s, f) => s + f.valor, 0);
+  const despesasMes = db.finance.filter(f => f.tipo === "despesa" && isCurrentMonth(f.data)).reduce((s, f) => s + f.valor, 0);
+  const lucroMes = receitasMes - despesasMes;
+  const margemMes = receitasMes > 0 ? (lucroMes / receitasMes) * 100 : null;
+
+  document.getElementById("finKpis").innerHTML = [
+    kpiCard({ label: "Receita do mês", value: hasData ? formatBRL(receitasMes) : "Sem dados cadastrados", isEmpty: !hasData, tone: "green", icon: `<path d="M12 5v14M5 12h14"/>` }),
+    kpiCard({ label: "Despesas do mês", value: hasData ? formatBRL(despesasMes) : "Sem dados cadastrados", isEmpty: !hasData, tone: "amber", icon: `<path d="M5 12h14"/>` }),
+    kpiCard({ label: "Lucro do mês", value: hasData ? formatBRL(lucroMes) : "Sem dados cadastrados", isEmpty: !hasData, tone: "green", icon: `<path d="M3 17 9 11l4 4 8-8"/><path d="M15 6h6v6"/>` }),
+    kpiCard({ label: "Margem do mês", value: margemMes !== null ? margemMes.toFixed(1) + "%" : "Sem dados cadastrados", isEmpty: margemMes === null, icon: `<circle cx="12" cy="12" r="9"/>` })
+  ].join("");
+}
+
+function renderFinanceiroCharts() {
+  const db = Store.get();
+  const series = lastNMonthsSeries(6).map(s => ({ ...s, receita: 0, despesa: 0 }));
+  db.finance.forEach(f => {
+    const item = series.find(s => s.ym === monthKey(f.data));
+    if (item) item[f.tipo] += f.valor;
+  });
+  const hasFlow = series.some(s => s.receita > 0 || s.despesa > 0);
+  document.getElementById("finFluxoChart").innerHTML = hasFlow
+    ? barChartSVG(series.map(s => ({ label: s.label, valor: s.receita - s.despesa })), { color: "var(--color-brand-600)", formatValue: v => formatBRL(v) })
+    : `<div class="chart-placeholder"><span>Sem dados cadastrados — registre receitas e despesas para ver o fluxo de caixa aqui.</span></div>`;
+
+  const porCategoria = {};
+  db.finance.filter(f => f.tipo === "despesa").forEach(f => {
+    porCategoria[f.categoria] = (porCategoria[f.categoria] || 0) + f.valor;
+  });
+  const dataDonut = Object.entries(porCategoria).map(([label, valor]) => ({ label, valor }));
+  document.getElementById("finDespesasDonut").innerHTML = donutChartSVG(dataDonut, { formatValue: formatBRL });
+}
+
+function renderFinanceiroTabela() {
+  const db = Store.get();
+  let lancamentos = [...db.finance].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  if (financeiroFiltroAtual !== "todos") lancamentos = lancamentos.filter(f => f.tipo === financeiroFiltroAtual);
+
+  const container = document.getElementById("financeiroTabela");
+  if (!lancamentos.length) {
+    container.innerHTML = reusableTable(
+      ["Data", "Tipo", "Categoria", "Descrição", "Valor", ""],
+      db.finance.length ? "Nenhum lançamento nesse filtro" : "Nenhum lançamento registrado ainda",
+      db.finance.length ? "Escolha outro filtro acima." : "Lançamentos são criados manualmente ou automaticamente quando um pedido é concluído."
+    );
+    return;
+  }
+
+  const rows = lancamentos.map(f => `
+    <tr>
+      <td>${formatDateBR(f.data)}</td>
+      <td><span class="badge tone-${f.tipo === "receita" ? "green" : "red"}">${f.tipo === "receita" ? "Receita" : "Despesa"}</span></td>
+      <td>${escapeHtml(f.categoria)}</td>
+      <td>${escapeHtml(f.descricao || "—")}${f.origem === "pedido" ? `<div class="text-muted">Gerado automaticamente por pedido</div>` : ""}</td>
+      <td class="num" style="color:${f.tipo === "receita" ? "var(--color-green-700)" : "var(--color-red-600)"}; font-weight:600;">${f.tipo === "despesa" ? "- " : ""}${formatBRL(f.valor)}</td>
+      <td><div class="row-actions"><button class="icon-btn danger" data-del-fin="${f.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div></td>
+    </tr>
+  `).join("");
+  container.innerHTML = dataTable(["Data", "Tipo", "Categoria", "Descrição", "Valor", ""], [rows]);
+  document.querySelectorAll("[data-del-fin]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-del-fin");
+      confirmModal("Excluir lançamento", "Tem certeza que deseja excluir este lançamento financeiro?", () => {
+        db.finance = db.finance.filter(f => f.id !== id);
+        Store.persist();
+        Toast.show("Lançamento excluído.");
+        renderFinanceiroPage();
+      }, "Excluir");
+    }));
+}
+
+function renderFinanceiroPage() {
+  renderFinanceiroKpis();
+  renderFinanceiroCharts();
+  renderFinanceiroTabela();
+}
+
+function abrirFormularioLancamento(tipo) {
+  const categorias = tipo === "receita" ? RECEITA_CATEGORIAS : DESPESA_CATEGORIAS;
+  openModal({
+    title: tipo === "receita" ? "Nova receita" : "Nova despesa",
+    bodyHtml: `
+      <div class="field">
+        <label>Categoria</label>
+        <select id="fFinCategoria">${categorias.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+      </div>
+      <div class="field"><label>Descrição</label><input id="fFinDescricao" placeholder="Ex: Venda de cartões — cliente Ana"></div>
+      <div class="field-row">
+        <div class="field"><label>Valor</label><input type="number" step="0.01" id="fFinValor" placeholder="0,00"></div>
+        <div class="field"><label>Data</label><input type="date" id="fFinData" value="${todayISO()}"></div>
+      </div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const valor = parseFloat(document.getElementById("fFinValor").value);
+        if (!valor || valor <= 0) { Toast.show("Informe um valor válido.", "error"); return; }
+        const db = Store.get();
+        db.finance.push({
+          id: uid("fin"),
+          tipo,
+          categoria: document.getElementById("fFinCategoria").value,
+          descricao: document.getElementById("fFinDescricao").value.trim(),
+          valor,
+          data: document.getElementById("fFinData").value || todayISO(),
+          origem: "manual"
+        });
+        Store.persist();
+        closeModal();
+        Toast.show(tipo === "receita" ? "Receita registrada." : "Despesa registrada.");
+        renderFinanceiroPage();
+      });
+    }
+  });
+}
+/* ==========================================================================
+   ESTOQUE
+   Controle de materiais/produtos que ficam fisicamente com a gráfica,
+   independente da produção terceirizada.
+   ========================================================================== */
+
+function renderEstoque(filtro) {
+  filtro = (filtro || "").toLowerCase().trim();
+  const db = Store.get();
+  let itens = db.stock;
+  if (filtro) itens = itens.filter(i => i.nome.toLowerCase().includes(filtro));
+
+  const baixos = db.stock.filter(s => s.estoqueMinimo != null && s.quantidade <= s.estoqueMinimo);
+  document.getElementById("estoqueAlertaTop").innerHTML = baixos.length
+    ? `<div class="stock-alert-strip">
+        <svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <span>${baixos.length} item${baixos.length > 1 ? "ns" : ""} abaixo da quantidade mínima: ${baixos.map(b => escapeHtml(b.nome)).join(", ")}</span>
+      </div>`
+    : "";
+
+  const container = document.getElementById("estoqueTabela");
+  if (!itens.length) {
+    container.innerHTML = reusableTable(
+      ["Item", "Categoria", "Quantidade", "Mínimo", "Fornecedor", ""],
+      filtro ? "Nenhum item encontrado" : "Nenhum item de estoque cadastrado",
+      filtro ? "Tente pesquisar por outro termo." : "Clique em \"Novo item de estoque\" para começar a controlar seus materiais."
+    );
+    return;
+  }
+  const rows = itens.map(i => {
+    const baixo = i.estoqueMinimo != null && i.quantidade <= i.estoqueMinimo;
+    const fornecedor = getSupplierById(i.fornecedorId);
+    return `
+      <tr>
+        <td><strong style="color:var(--color-text-900);">${escapeHtml(i.nome)}</strong>${i.observacoes ? `<div class="text-muted">${escapeHtml(i.observacoes)}</div>` : ""}</td>
+        <td>${escapeHtml(i.categoria || "—")}</td>
+        <td class="num">${baixo ? `<span class="badge tone-red">${formatNum(i.quantidade)}</span>` : formatNum(i.quantidade)}</td>
+        <td class="num">${i.estoqueMinimo != null ? formatNum(i.estoqueMinimo) : "—"}</td>
+        <td>${fornecedor ? escapeHtml(fornecedor.nome) : "—"}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" data-edit-estoque="${i.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button class="icon-btn danger" data-del-estoque="${i.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+  container.innerHTML = dataTable(["Item", "Categoria", "Quantidade", "Mínimo", "Fornecedor", ""], [rows]);
+  document.querySelectorAll("[data-edit-estoque]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioEstoque(btn.getAttribute("data-edit-estoque"))));
+  document.querySelectorAll("[data-del-estoque]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoEstoque(btn.getAttribute("data-del-estoque"))));
+}
+
+function abrirFormularioEstoque(id) {
+  const db = Store.get();
+  const item = id ? db.stock.find(s => s.id === id) : null;
+  openModal({
+    title: item ? "Editar item de estoque" : "Novo item de estoque",
+    bodyHtml: `
+      <div class="field-row">
+        <div class="field"><label>Nome do item</label><input id="fEstNome" value="${escapeHtml(item ? item.nome : "")}" placeholder="Ex: Papel Fotográfico 230g"></div>
+        <div class="field"><label>Categoria</label><input id="fEstCategoria" value="${escapeHtml(item ? item.categoria : "")}" placeholder="Ex: Papel / Insumo"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantidade atual</label><input type="number" id="fEstQtd" value="${item ? item.quantidade : ""}" placeholder="0"></div>
+        <div class="field"><label>Quantidade mínima (alerta)</label><input type="number" id="fEstMin" value="${item && item.estoqueMinimo != null ? item.estoqueMinimo : ""}" placeholder="Opcional"></div>
+      </div>
+      <div class="field">
+        <label>Fornecedor</label>
+        <select id="fEstFornecedor">${fornecedorOptionsHtml(item ? item.fornecedorId : null)}</select>
+      </div>
+      <div class="field"><label>Observações</label><textarea id="fEstObs" placeholder="Observações">${escapeHtml(item ? (item.observacoes || "") : "")}</textarea></div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const nome = document.getElementById("fEstNome").value.trim();
+        if (!nome) { Toast.show("Informe o nome do item.", "error"); return; }
+        const qtdStr = document.getElementById("fEstQtd").value;
+        const minStr = document.getElementById("fEstMin").value;
+        const data = {
+          nome,
+          categoria: document.getElementById("fEstCategoria").value.trim(),
+          quantidade: qtdStr === "" ? 0 : parseInt(qtdStr, 10),
+          estoqueMinimo: minStr === "" ? null : parseInt(minStr, 10),
+          fornecedorId: document.getElementById("fEstFornecedor").value || null,
+          observacoes: document.getElementById("fEstObs").value.trim()
+        };
+        if (item) {
+          Object.assign(item, data);
+        } else {
+          db.stock.push(Object.assign({ id: uid("est") }, data));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(item ? "Item atualizado." : "Item de estoque cadastrado.");
+        renderEstoque(document.getElementById("estoqueSearch").value);
+        refreshSidebarBadges();
+      });
+    }
+  });
+}
+
+function confirmarExclusaoEstoque(id) {
+  const db = Store.get();
+  const item = db.stock.find(s => s.id === id);
+  if (!item) return;
+  confirmModal("Excluir item de estoque", `Tem certeza que deseja excluir <strong>${escapeHtml(item.nome)}</strong>?`, () => {
+    db.stock = db.stock.filter(s => s.id !== id);
+    Store.persist();
+    Toast.show("Item excluído.");
+    renderEstoque(document.getElementById("estoqueSearch").value);
+    refreshSidebarBadges();
+  }, "Excluir");
+}
+/* ==========================================================================
+   MARKETING
+   ========================================================================== */
+
+const MARKETING_COST_CATEGORIAS = ["Designer", "Artes", "Serviços externos", "Assinaturas", "Ferramentas", "Outros"];
+
+let marketingPlataformaAtual = null;
+
+function ensureMarketingPlataformaAtual() {
+  const db = Store.get();
+  if (!db.marketingPlatforms.length) { marketingPlataformaAtual = null; return null; }
+  if (!marketingPlataformaAtual || !db.marketingPlatforms.some(p => p.id === marketingPlataformaAtual)) {
+    marketingPlataformaAtual = db.marketingPlatforms[0].id;
+  }
+  return marketingPlataformaAtual;
+}
+
+function renderMarketingPlataformaTabs() {
+  const db = Store.get();
+  const wrap = document.getElementById("mktPlataformaTabs");
+  if (!db.marketingPlatforms.length) {
+    wrap.innerHTML = `<span class="text-muted" style="font-size:13px; padding:8px 0;">Nenhuma plataforma cadastrada — clique em "Adicionar plataforma" para começar.</span>`;
+    return;
+  }
+  wrap.innerHTML = db.marketingPlatforms.map(p => `
+    <button class="tab-btn ${p.id === marketingPlataformaAtual ? "active" : ""}" data-mkt-plataforma="${p.id}" type="button">${escapeHtml(p.nome)}</button>
+  `).join("");
+  wrap.querySelectorAll("[data-mkt-plataforma]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      marketingPlataformaAtual = btn.getAttribute("data-mkt-plataforma");
+      renderMarketing();
+    });
+  });
+}
+
+function computeMarketingTotais(plataformaId) {
+  const db = Store.get();
+  const registros = db.marketingDaily.filter(r => r.plataformaId === plataformaId);
+  return registros.reduce((acc, r) => {
+    acc.impressoes += (r.impressoes || 0);
+    acc.cliques += (r.cliques || 0);
+    acc.custo += (r.custo || 0);
+    acc.whatsapp += (r.whatsapp || 0);
+    acc.vendas += (r.vendas || 0);
+    return acc;
+  }, { impressoes: 0, cliques: 0, custo: 0, whatsapp: 0, vendas: 0 });
+}
+
+function renderMarketingResumo(plataformaId) {
+  const db = Store.get();
+  const registros = db.marketingDaily.filter(r => r.plataformaId === plataformaId);
+  const hasData = registros.length > 0;
+  const t = computeMarketingTotais(plataformaId);
+  document.getElementById("mktKpis").innerHTML = [
+    kpiCard({ label: "Total de impressões", value: hasData ? formatNum(t.impressoes) : "Sem dados cadastrados", isEmpty: !hasData, tone: "blue",
+      icon: `<circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/>` }),
+    kpiCard({ label: "Total de cliques", value: hasData ? formatNum(t.cliques) : "Sem dados cadastrados", isEmpty: !hasData, tone: "purple",
+      icon: `<path d="M3 11 20 4l-3 17-5.5-4.5L8 20l-1-6-4-3Z"/>` }),
+    kpiCard({ label: "Total investido", value: hasData ? formatBRL(t.custo) : "Sem dados cadastrados", isEmpty: !hasData, tone: "amber",
+      icon: `<path d="M12 5v14M5 12h14"/>` }),
+    kpiCard({ label: "Contatos WhatsApp", value: hasData ? formatNum(t.whatsapp) : "Sem dados cadastrados", isEmpty: !hasData, tone: "green",
+      icon: `<path d="M4 20l1.4-4.1A8 8 0 1 1 9 18.6Z"/><path d="M9 10.5c0 3 2.5 5.5 5.5 5.5"/>` }),
+    kpiCard({ label: "Vendas geradas", value: hasData ? formatNum(t.vendas) : "Sem dados cadastrados", isEmpty: !hasData,
+      icon: `<rect x="3" y="7" width="13" height="12" rx="1.5"/><path d="M16 11h3.2a1 1 0 0 1 .9.6l1.6 3.4v3a1 1 0 0 1-1 1H16"/>` })
+  ].join("");
+}
+
+function renderMarketingTabelaDiaria(plataformaId) {
+  const db = Store.get();
+  const plataforma = db.marketingPlatforms.find(p => p.id === plataformaId);
+  document.getElementById("mktTabelaTitulo").textContent = plataforma ? `Fechamento diário — ${plataforma.nome}` : "Fechamento diário";
+
+  const registros = [...db.marketingDaily].filter(r => r.plataformaId === plataformaId).sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  const container = document.getElementById("mktTabela");
+  if (!registros.length) {
+    container.innerHTML = reusableTable(
+      ["Data", "Impressões", "Cliques", "Custo", "WhatsApp", "Vendas", ""],
+      "Nenhum dia registrado ainda",
+      "Clique em \"Registrar dia\" para lançar o fechamento diário desta plataforma."
+    );
+    return;
+  }
+  const rows = registros.map(r => `
+    <tr>
+      <td><strong style="color:var(--color-text-900);">${formatDateBR(r.data)}</strong></td>
+      <td class="num">${formatNum(r.impressoes)}</td>
+      <td class="num">${formatNum(r.cliques)}</td>
+      <td class="num">${formatBRL(r.custo)}</td>
+      <td class="num">${formatNum(r.whatsapp)}</td>
+      <td class="num">${formatNum(r.vendas)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" data-edit-mkt-dia="${r.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="icon-btn danger" data-del-mkt-dia="${r.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+  container.innerHTML = dataTable(["Data", "Impressões", "Cliques", "Custo", "WhatsApp", "Vendas", ""], [rows]);
+
+  container.querySelectorAll("[data-edit-mkt-dia]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioMarketingDia(plataformaId, btn.getAttribute("data-edit-mkt-dia"))));
+  container.querySelectorAll("[data-del-mkt-dia]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoMarketingDia(btn.getAttribute("data-del-mkt-dia"))));
+}
+
+function abrirFormularioMarketingDia(plataformaId, registroId) {
+  const db = Store.get();
+  if (!plataformaId) { Toast.show("Cadastre uma plataforma antes de registrar um dia.", "error"); return; }
+  const registro = registroId ? db.marketingDaily.find(r => r.id === registroId) : null;
+  const plataforma = db.marketingPlatforms.find(p => p.id === plataformaId);
+  openModal({
+    title: registro ? "Editar fechamento diário" : `Registrar dia — ${plataforma ? escapeHtml(plataforma.nome) : ""}`,
+    bodyHtml: `
+      <div class="field"><label>Data</label><input type="date" id="fMktData" value="${registro ? registro.data : todayISO()}"></div>
+      <div class="field-row">
+        <div class="field"><label>Impressões</label><input type="number" id="fMktImpressoes" value="${registro ? registro.impressoes : ""}" placeholder="0"></div>
+        <div class="field"><label>Cliques</label><input type="number" id="fMktCliques" value="${registro ? registro.cliques : ""}" placeholder="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Custo do dia (R$)</label><input type="number" step="0.01" id="fMktCusto" value="${registro ? registro.custo : ""}" placeholder="0,00"></div>
+        <div class="field"><label>WhatsApp (novos contatos)</label><input type="number" id="fMktWhatsapp" value="${registro ? registro.whatsapp : ""}" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Vendas geradas</label><input type="number" id="fMktVendas" value="${registro ? registro.vendas : ""}" placeholder="0"></div>
+      <div class="hint">Registre o fechamento do dia conforme o painel da plataforma de anúncios. Contatos WhatsApp = novas pessoas que chegaram pela campanha, não quantidade de mensagens.</div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">${registro ? "Salvar alterações" : "Registrar"}</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const data = document.getElementById("fMktData").value || todayISO();
+        const payload = {
+          plataformaId,
+          data,
+          impressoes: parseInt(document.getElementById("fMktImpressoes").value, 10) || 0,
+          cliques: parseInt(document.getElementById("fMktCliques").value, 10) || 0,
+          custo: parseFloat(document.getElementById("fMktCusto").value) || 0,
+          whatsapp: parseInt(document.getElementById("fMktWhatsapp").value, 10) || 0,
+          vendas: parseInt(document.getElementById("fMktVendas").value, 10) || 0
+        };
+        if (registro) {
+          Object.assign(registro, payload);
+        } else {
+          db.marketingDaily.push(Object.assign({ id: uid("mktd") }, payload));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(registro ? "Fechamento atualizado." : "Fechamento registrado.");
+        renderMarketing();
+      });
+    }
+  });
+}
+
+function confirmarExclusaoMarketingDia(id) {
+  const db = Store.get();
+  confirmModal("Excluir registro", "Tem certeza que deseja excluir este fechamento diário?", () => {
+    db.marketingDaily = db.marketingDaily.filter(r => r.id !== id);
+    Store.persist();
+    Toast.show("Registro excluído.");
+    renderMarketing();
+  }, "Excluir");
+}
+
+function abrirFormularioNovaPlataforma() {
+  openModal({
+    title: "Adicionar plataforma",
+    bodyHtml: `
+      <div class="field"><label>Nome da plataforma</label><input id="fMktPlataformaNome" placeholder="Ex: Facebook Ads, Instagram Ads..."></div>
+      <div class="hint">A nova plataforma segue a mesma lógica de fechamento diário do Google Ads.</div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Adicionar</button>
+    `,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const nome = document.getElementById("fMktPlataformaNome").value.trim();
+        if (!nome) { Toast.show("Informe o nome da plataforma.", "error"); return; }
+        const db = Store.get();
+        const novaPlataforma = { id: uid("plat"), nome };
+        db.marketingPlatforms.push(novaPlataforma);
+        Store.persist();
+        marketingPlataformaAtual = novaPlataforma.id;
+        closeModal();
+        Toast.show("Plataforma adicionada.");
+        renderMarketing();
+      });
+    }
+  });
+}
+
+/* ---------- Custos de Marketing (designer, artes, ferramentas, assinaturas...) ---------- */
+
+function renderMarketingCustos() {
+  const db = Store.get();
+  const registros = [...db.marketingCosts].sort((a, b) => (b.data || b.mes || "").localeCompare(a.data || a.mes || ""));
+  const container = document.getElementById("mktCustosTabela");
+  if (!registros.length) {
+    container.innerHTML = reusableTable(
+      ["Tipo", "Categoria", "Descrição", "Valor", "Período", ""],
+      "Nenhum custo de marketing registrado",
+      "Clique em \"Novo custo de marketing\" para registrar designer, artes, ferramentas e outros custos de divulgação."
+    );
+    return;
+  }
+  const rows = registros.map(c => {
+    const periodo = c.tipo === "mensal" ? (c.mes ? formatMonthLabel(c.mes) + " · mensal" : "Mensal") : formatDateBR(c.data);
+    return `
+      <tr>
+        <td><span class="badge tone-${c.tipo === "mensal" ? "blue" : "gray"}">${c.tipo === "mensal" ? "Mensal" : "Pontual"}</span></td>
+        <td>${escapeHtml(c.categoria)}</td>
+        <td>${escapeHtml(c.descricao || "—")}</td>
+        <td class="num" style="font-weight:600;">${formatBRL(c.valor)}</td>
+        <td>${periodo}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" data-edit-mkt-custo="${c.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button class="icon-btn danger" data-del-mkt-custo="${c.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+  container.innerHTML = dataTable(["Tipo", "Categoria", "Descrição", "Valor", "Período", ""], [rows]);
+  container.querySelectorAll("[data-edit-mkt-custo]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioMarketingCusto(btn.getAttribute("data-edit-mkt-custo"))));
+  container.querySelectorAll("[data-del-mkt-custo]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-del-mkt-custo");
+      confirmModal("Excluir custo", "Tem certeza que deseja excluir este custo de marketing?", () => {
+        db.marketingCosts = db.marketingCosts.filter(c => c.id !== id);
+        Store.persist();
+        Toast.show("Custo excluído.");
+        renderMarketing();
+      }, "Excluir");
+    }));
+}
+
+function abrirFormularioMarketingCusto(id) {
+  const db = Store.get();
+  const custo = id ? db.marketingCosts.find(c => c.id === id) : null;
+  openModal({
+    title: custo ? "Editar custo de marketing" : "Novo custo de marketing",
+    bodyHtml: `
+      <div class="field-row">
+        <div class="field"><label>Tipo</label>
+          <select id="fMktCustoTipo">
+            <option value="mensal" ${custo && custo.tipo === "mensal" ? "selected" : ""}>Mensal (recorrente)</option>
+            <option value="pontual" ${!custo || custo.tipo === "pontual" ? "selected" : ""}>Pontual (único)</option>
+          </select>
+        </div>
+        <div class="field"><label>Categoria</label>
+          <select id="fMktCustoCategoria">${MARKETING_COST_CATEGORIAS.map(cat => `<option value="${cat}" ${custo && custo.categoria === cat ? "selected" : ""}>${cat}</option>`).join("")}</select>
+        </div>
+      </div>
+      <div class="field"><label>Descrição</label><input id="fMktCustoDescricao" value="${escapeHtml(custo ? custo.descricao || "" : "")}" placeholder="Ex: Criação de artes para campanha de julho"></div>
+      <div class="field-row">
+        <div class="field"><label>Valor (R$)</label><input type="number" step="0.01" id="fMktCustoValor" value="${custo ? custo.valor : ""}" placeholder="0,00"></div>
+        <div class="field" id="fMktCustoMesWrap"><label>Mês de referência</label><input type="month" id="fMktCustoMes" value="${custo && custo.mes ? custo.mes : monthKey(todayISO())}"></div>
+        <div class="field" id="fMktCustoDataWrap" style="display:none;"><label>Data</label><input type="date" id="fMktCustoData" value="${custo && custo.data ? custo.data : todayISO()}"></div>
+      </div>
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      const tipoSel = document.getElementById("fMktCustoTipo");
+      const mesWrap = document.getElementById("fMktCustoMesWrap");
+      const dataWrap = document.getElementById("fMktCustoDataWrap");
+      const syncTipo = () => {
+        const isMensal = tipoSel.value === "mensal";
+        mesWrap.style.display = isMensal ? "" : "none";
+        dataWrap.style.display = isMensal ? "none" : "";
+      };
+      tipoSel.addEventListener("change", syncTipo);
+      syncTipo();
+
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const valor = parseFloat(document.getElementById("fMktCustoValor").value);
+        if (isNaN(valor) || valor < 0) { Toast.show("Informe um valor válido.", "error"); return; }
+        const tipo = tipoSel.value;
+        const payload = {
+          tipo,
+          categoria: document.getElementById("fMktCustoCategoria").value,
+          descricao: document.getElementById("fMktCustoDescricao").value.trim(),
+          valor,
+          mes: tipo === "mensal" ? (document.getElementById("fMktCustoMes").value || monthKey(todayISO())) : null,
+          data: tipo === "pontual" ? (document.getElementById("fMktCustoData").value || todayISO()) : null
+        };
+        if (custo) {
+          Object.assign(custo, payload);
+        } else {
+          db.marketingCosts.push(Object.assign({ id: uid("mktc") }, payload));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(custo ? "Custo atualizado." : "Custo registrado.");
+        renderMarketing();
+      });
+    }
+  });
+}
+
+/* ---------- Render mestre da página Marketing ---------- */
+
+function renderMarketing() {
+  ensureMarketingPlataformaAtual();
+  renderMarketingPlataformaTabs();
+
+  const plataformaId = marketingPlataformaAtual;
+  if (!plataformaId) {
+    document.getElementById("mktKpis").innerHTML = "";
+    document.getElementById("mktTabelaTitulo").textContent = "Fechamento diário";
+    document.getElementById("mktTabela").innerHTML = reusableTable(
+      ["Data", "Impressões", "Cliques", "Custo", "WhatsApp", "Vendas", ""],
+      "Nenhuma plataforma cadastrada",
+      "Clique em \"Adicionar plataforma\" para começar (ex: Google Ads)."
+    );
+  } else {
+    renderMarketingResumo(plataformaId);
+    renderMarketingTabelaDiaria(plataformaId);
+  }
+  renderMarketingCustos();
+}
+/* ==========================================================================
+   RELATÓRIOS
+   ========================================================================== */
+
+function renderRelatorios() {
+  const db = Store.get();
+  const periodoSel = document.getElementById("relPeriodo");
+  const dias = periodoSel ? periodoSel.value : "30";
+
+  const isPedidoConcluido = o => (o.status === "concluido" || o.statusOp === "entregue") && o.dataConclusao;
+  const pedidosPeriodo = db.orders.filter(o => isPedidoConcluido(o) && withinPeriod(o.dataConclusao, dias));
+
+  // Vendas por período (últimos 6 meses, sempre, para contexto de tendência)
+  const series = lastNMonthsSeries(6);
+  db.orders.filter(o => isPedidoConcluido(o)).forEach(o => {
+    const item = series.find(s => s.ym === monthKey(o.dataConclusao));
+    if (item) item.valor += (o.valor || 0);
+  });
+  document.getElementById("relVendasChart").innerHTML = series.some(s => s.valor > 0)
+    ? barChartSVG(series.map(s => ({ label: s.label, valor: s.valor })), { formatValue: formatBRL })
+    : `<div class="chart-placeholder"><span>Sem dados cadastrados</span></div>`;
+
+  // Produtos mais vendidos no período
+  const porProduto = {};
+  pedidosPeriodo.forEach(o => {
+    if (!o.produtoNome) return;
+    porProduto[o.produtoNome] = (porProduto[o.produtoNome] || 0) + (o.valor || 0);
+  });
+  const dataProdutos = Object.entries(porProduto).map(([label, valor]) => ({ label, valor })).sort((a, b) => b.valor - a.valor).slice(0, 6);
+  document.getElementById("relProdutosChart").innerHTML = dataProdutos.length
+    ? barChartSVG(dataProdutos, { formatValue: formatBRL, color: "var(--color-purple-600)" })
+    : `<div class="chart-placeholder"><span>Sem dados cadastrados no período selecionado</span></div>`;
+
+  // Margem de lucro média por produto (a partir de orçamentos gerados no período, todos os status)
+  const orcamentosPeriodo = db.budgets.filter(b => withinPeriod(b.createdAt, dias));
+  const margemPorProduto = {};
+  orcamentosPeriodo.forEach(b => {
+    if (b.margemPct === null || b.margemPct === undefined) return;
+    margemPorProduto[b.produtoNome] = margemPorProduto[b.produtoNome] || [];
+    margemPorProduto[b.produtoNome].push(b.margemPct);
+  });
+  const dataMargem = Object.entries(margemPorProduto).map(([label, arr]) => ({ label, valor: arr.reduce((s, v) => s + v, 0) / arr.length }));
+  document.getElementById("relMargemChart").innerHTML = dataMargem.length
+    ? barChartSVG(dataMargem, { formatValue: v => v.toFixed(0) + "%", color: "var(--color-green-600)" })
+    : `<div class="chart-placeholder"><span>Sem dados cadastrados — gere orçamentos para ver a margem média por produto.</span></div>`;
+
+  // Desempenho por fornecedor (custo total em pedidos concluídos no período)
+  const porFornecedor = {};
+  pedidosPeriodo.forEach(o => {
+    if (!o.fornecedorId) return;
+    const f = getSupplierById(o.fornecedorId);
+    const nome = f ? f.nome : "Fornecedor removido";
+    porFornecedor[nome] = (porFornecedor[nome] || 0) + (o.custo || 0);
+  });
+  const dataFornecedor = Object.entries(porFornecedor).map(([label, valor]) => ({ label, valor }));
+  document.getElementById("relFornecedorChart").innerHTML = dataFornecedor.length
+    ? donutChartSVG(dataFornecedor, { formatValue: formatBRL })
+    : `<div class="chart-placeholder" style="height:180px;"><span>Sem dados cadastrados no período selecionado</span></div>`;
+}
+/* ==========================================================================
+   CONFIGURAÇÕES
+   ========================================================================== */
+
+function renderConfiguracoes() {
+  const db = Store.get();
+  const s = db.settings;
+
+  document.getElementById("themeOptClaro").classList.toggle("active", s.tema !== "escuro");
+  document.getElementById("themeOptEscuro").classList.toggle("active", s.tema === "escuro");
+  document.getElementById("empresaResumo").textContent = s.empresaNome + (s.empresaCNPJ ? " · " + s.empresaCNPJ : "");
+  document.getElementById("toggleNotifEmail").classList.toggle("on", !!s.notifEmail);
+  document.getElementById("toggleNotifWhatsapp").classList.toggle("on", !!s.notifWhatsapp);
+
+  document.getElementById("themeOptClaro").onclick = () => { s.tema = "claro"; Store.persist(); aplicarTema("claro"); renderConfiguracoes(); Toast.show("Modo claro ativado."); };
+  document.getElementById("themeOptEscuro").onclick = () => { s.tema = "escuro"; Store.persist(); aplicarTema("escuro"); renderConfiguracoes(); Toast.show("Modo escuro ativado."); };
+
+  document.getElementById("toggleNotifEmail").onclick = () => { s.notifEmail = !s.notifEmail; Store.persist(); renderConfiguracoes(); };
+  document.getElementById("toggleNotifWhatsapp").onclick = () => { s.notifWhatsapp = !s.notifWhatsapp; Store.persist(); renderConfiguracoes(); };
+
+  document.getElementById("btnEditarEmpresa").onclick = () => {
+    openModal({
+      title: "Dados da empresa",
+      bodyHtml: `
+        <div class="field"><label>Nome da empresa</label><input id="fEmpNome" value="${escapeHtml(s.empresaNome)}"></div>
+        <div class="field"><label>CNPJ</label><input id="fEmpCnpj" value="${escapeHtml(s.empresaCNPJ)}" placeholder="Opcional"></div>
+        <div class="field"><label>Contato</label><input id="fEmpContato" value="${escapeHtml(s.empresaContato)}" placeholder="Telefone ou e-mail"></div>
+      `,
+      footerHtml: `<button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button><button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>`,
+      onOpen: () => {
+        document.getElementById("modalSaveBtn").addEventListener("click", () => {
+          s.empresaNome = document.getElementById("fEmpNome").value.trim() || s.empresaNome;
+          s.empresaCNPJ = document.getElementById("fEmpCnpj").value.trim();
+          s.empresaContato = document.getElementById("fEmpContato").value.trim();
+          Store.persist();
+          closeModal();
+          Toast.show("Dados da empresa atualizados.");
+          renderConfiguracoes();
+          renderSidebar("configuracoes");
+        });
+      }
+    });
+  };
+
+  document.getElementById("btnEditarMargens").onclick = () => {
+    openModal({
+      title: "Margem de referência",
+      bodyHtml: `
+        <div class="field-row">
+          <div class="field"><label>Margem considerada "boa" a partir de (%)</label><input type="number" id="fMargemBoa" value="${s.margemBoa}"></div>
+          <div class="field"><label>Abaixo disso é considerada "baixa" (%)</label><input type="number" id="fMargemBaixa" value="${s.margemBaixa}"></div>
+        </div>
+        <div class="hint">Abaixo do valor de margem baixa, o orçamento é classificado como "necessita revisão".</div>
+      `,
+      footerHtml: `<button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button><button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>`,
+      onOpen: () => {
+        document.getElementById("modalSaveBtn").addEventListener("click", () => {
+          s.margemBoa = parseFloat(document.getElementById("fMargemBoa").value) || s.margemBoa;
+          s.margemBaixa = parseFloat(document.getElementById("fMargemBaixa").value) || s.margemBaixa;
+          Store.persist();
+          closeModal();
+          Toast.show("Margens de referência atualizadas.");
+        });
+      }
+    });
+  };
+
+  document.getElementById("btnExportarDados").onclick = () => {
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `backup-grafica-${todayISO()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    Toast.show("Backup exportado.");
+  };
+
+  document.getElementById("btnImportarDados").onclick = () => document.getElementById("inputImportarDados").click();
+  document.getElementById("inputImportarDados").onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const novoDb = JSON.parse(reader.result);
+        confirmModal("Importar backup", "Isso substituirá todos os dados atuais pelos dados do arquivo importado. Deseja continuar?", () => {
+          Store.replaceAll(novoDb);
+          aplicarTema(Store.get().settings.tema);
+          renderApp();
+          Toast.show("Backup importado com sucesso.");
+        }, "Importar e substituir");
+      } catch (err) {
+        Toast.show("Arquivo inválido. Verifique se é um backup exportado por este sistema.", "error");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  document.getElementById("btnResetDados").onclick = () => {
+    confirmModal(
+      "Apagar todos os dados",
+      "Isso vai apagar clientes, pedidos, orçamentos, financeiro, estoque e marketing. Produtos e fornecedores voltam aos dados originais. Esta ação não pode ser desfeita.",
+      () => {
+        Store.resetAll();
+        aplicarTema(Store.get().settings.tema);
+        renderApp();
+        Toast.show("Todos os dados foram apagados.");
+      },
+      "Apagar tudo"
+    );
+  };
+}
+/* ==========================================================================
+   CUSTOS — camada administrativa de custos reais (nova guia)
+   Não substitui nem altera a guia Produtos: apenas se conecta a ela.
+   ========================================================================== */
+
+let custosTabAtual = "fornecedores";
+
+function custoFornecedorProdutoOptionsHtml(selectedId) {
+  const produtos = Store.get().products;
+  return `<option value="">Selecione o produto</option>` + produtos.map(p =>
+    `<option value="${p.id}" ${p.id === selectedId ? "selected" : ""}>${escapeHtml(p.nome)}</option>`).join("");
+}
+
+function custoFornecedorMaterialOptionsHtml(produtoId, selectedId) {
+  const produto = getProductById(produtoId);
+  if (!produto) return `<option value="">Selecione o produto primeiro</option>`;
+  return (produto.materiais || []).map(m =>
+    `<option value="${m.id}" ${m.id === selectedId ? "selected" : ""}>${escapeHtml(m.nome)}</option>`).join("");
+}
+
+function renderCustos() {
+  document.querySelectorAll("#custosTabRow .tab-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-custos-tab") === custosTabAtual);
+  });
+  document.getElementById("custosTabFornecedores").style.display = custosTabAtual === "fornecedores" ? "" : "none";
+  document.getElementById("custosTabLogistica").style.display = custosTabAtual === "logistica" ? "" : "none";
+  document.getElementById("custosTabMarketing").style.display = custosTabAtual === "marketing" ? "" : "none";
+
+  if (custosTabAtual === "fornecedores") renderCustosFornecedores();
+  else if (custosTabAtual === "logistica") renderCustosLogistica();
+  else renderCustosMarketing();
+}
+
+/* ---------- Custos de Fornecedores ---------- */
+
+function renderCustosFornecedores() {
+  const db = Store.get();
+  const registros = [...db.custosFornecedores].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  const container = document.getElementById("custosFornecedoresTabela");
+  if (!registros.length) {
+    container.innerHTML = reusableTable(
+      ["Produto", "Categoria", "Material", "Fornecedor principal", "Fornecedor alternativo", "Quantidade", "Valor de compra", "Data", ""],
+      "Nenhum custo de fornecedor registrado ainda",
+      "Clique em \"Novo registro de custo\" para começar a controlar o custo real pago aos fornecedores."
+    );
+    return;
+  }
+  const rows = registros.map(r => {
+    const produto = getProductById(r.produtoId);
+    const material = produto ? (produto.materiais || []).find(m => m.id === r.materialId) : null;
+    const fp = getSupplierById(r.fornecedorPrincipalId);
+    const fa = getSupplierById(r.fornecedorAlternativoId);
+    const historicoQtd = (r.historico || []).length;
+    return `
+      <tr>
+        <td><strong style="color:var(--color-text-900);">${produto ? escapeHtml(produto.nome) : "Produto removido"}</strong></td>
+        <td>${produto ? escapeHtml(produto.categoria || "—") : "—"}</td>
+        <td>${material ? escapeHtml(material.nome) : "—"}</td>
+        <td>${fp ? escapeHtml(fp.nome) : "—"}</td>
+        <td>${fa ? escapeHtml(fa.nome) : "—"}</td>
+        <td class="num">${formatNum(r.quantidade)}</td>
+        <td class="num">${formatBRL(r.valorCompra)}</td>
+        <td>${formatDateBR(r.data)}${historicoQtd ? `<div class="text-muted">${historicoQtd} alteração(ões) anterior(es)</div>` : ""}</td>
+        <td>
+          <div class="row-actions">
+            ${historicoQtd ? `<button class="icon-btn" data-hist-custo="${r.id}" title="Ver histórico" type="button"><svg viewBox="0 0 24 24"><path d="M4 19h16M4 19l4-7 4 3 5-9"/></svg></button>` : ""}
+            <button class="icon-btn" data-edit-custo="${r.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button class="icon-btn danger" data-del-custo="${r.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+  container.innerHTML = dataTable(["Produto", "Categoria", "Material", "Fornecedor principal", "Fornecedor alternativo", "Quantidade", "Valor de compra", "Data", ""], [rows]);
+
+  document.querySelectorAll("[data-edit-custo]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioCustoFornecedor(btn.getAttribute("data-edit-custo"))));
+  document.querySelectorAll("[data-del-custo]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoCustoFornecedor(btn.getAttribute("data-del-custo"))));
+  document.querySelectorAll("[data-hist-custo]").forEach(btn =>
+    btn.addEventListener("click", () => verHistoricoCustoFornecedor(btn.getAttribute("data-hist-custo"))));
+}
+
+function verHistoricoCustoFornecedor(id) {
+  const db = Store.get();
+  const r = db.custosFornecedores.find(c => c.id === id);
+  if (!r) return;
+  const linhas = [...(r.historico || [])].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  openModal({
+    title: "Histórico de alteração de preço",
+    bodyHtml: linhas.length
+      ? dataTable(["Data", "Valor de compra"], [linhas.map(h => `<tr><td>${formatDateBR(h.data)}</td><td class="num">${formatBRL(h.valor)}</td></tr>`).join("")])
+      : `<div class="modal__placeholder">Sem alterações anteriores registradas.</div>`
+  });
+}
+
+function abrirFormularioCustoFornecedor(id) {
+  const db = Store.get();
+  const r = id ? db.custosFornecedores.find(c => c.id === id) : null;
+
+  openModal({
+    title: r ? "Editar custo de fornecedor" : "Novo registro de custo",
+    size: "lg",
+    bodyHtml: `
+      <div class="field-row">
+        <div class="field"><label>Produto</label><select id="fCustoProduto">${custoFornecedorProdutoOptionsHtml(r ? r.produtoId : null)}</select></div>
+        <div class="field"><label>Material</label><select id="fCustoMaterial">${custoFornecedorMaterialOptionsHtml(r ? r.produtoId : null, r ? r.materialId : null)}</select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Fornecedor principal</label><select id="fCustoFornecedorPrincipal">${fornecedorOptionsHtml(r ? r.fornecedorPrincipalId : null)}</select></div>
+        <div class="field"><label>Fornecedor alternativo</label><select id="fCustoFornecedorAlternativo">${fornecedorOptionsHtml(r ? r.fornecedorAlternativoId : null)}</select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantidade de referência</label><input type="number" id="fCustoQuantidade" value="${r ? r.quantidade : ""}" placeholder="Ex: 1000"></div>
+        <div class="field"><label>Valor de compra</label><input type="number" step="0.01" id="fCustoValor" value="${r ? r.valorCompra : ""}" placeholder="0,00"></div>
+      </div>
+      <div class="field"><label>Data</label><input type="date" id="fCustoData" value="${r ? r.data : todayISO()}"></div>
+      ${r ? `<div class="hint">Se o valor de compra for alterado, o valor anterior será guardado automaticamente no histórico.</div>` : ""}
+    `,
+    footerHtml: `
+      <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>
+    `,
+    onOpen: () => {
+      const produtoSel = document.getElementById("fCustoProduto");
+      produtoSel.addEventListener("change", () => {
+        document.getElementById("fCustoMaterial").innerHTML = custoFornecedorMaterialOptionsHtml(produtoSel.value, null);
+      });
+
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const produtoId = produtoSel.value;
+        const materialId = document.getElementById("fCustoMaterial").value;
+        const valorCompra = parseFloat(document.getElementById("fCustoValor").value);
+        if (!produtoId) { Toast.show("Selecione o produto.", "error"); return; }
+        if (!materialId) { Toast.show("Selecione o material.", "error"); return; }
+        if (isNaN(valorCompra)) { Toast.show("Informe o valor de compra.", "error"); return; }
+
+        const data = {
+          produtoId,
+          materialId,
+          fornecedorPrincipalId: document.getElementById("fCustoFornecedorPrincipal").value || null,
+          fornecedorAlternativoId: document.getElementById("fCustoFornecedorAlternativo").value || null,
+          quantidade: parseFloat(document.getElementById("fCustoQuantidade").value) || 0,
+          data: document.getElementById("fCustoData").value || todayISO()
+        };
+
+        if (r) {
+          if (r.valorCompra !== valorCompra) {
+            r.historico = r.historico || [];
+            r.historico.push({ valor: r.valorCompra, data: r.data });
+          }
+          Object.assign(r, data, { valorCompra });
+        } else {
+          db.custosFornecedores.push(Object.assign({ id: uid("custo"), historico: [] }, data, { valorCompra }));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(r ? "Custo de fornecedor atualizado." : "Custo de fornecedor registrado.");
+        renderCustosFornecedores();
+      });
+    }
+  });
+}
+
+function confirmarExclusaoCustoFornecedor(id) {
+  const db = Store.get();
+  const r = db.custosFornecedores.find(c => c.id === id);
+  if (!r) return;
+  confirmModal("Excluir registro de custo", "Tem certeza que deseja excluir este registro de custo de fornecedor?", () => {
+    db.custosFornecedores = db.custosFornecedores.filter(c => c.id !== id);
+    Store.persist();
+    Toast.show("Registro excluído.");
+    renderCustosFornecedores();
+  }, "Excluir");
+}
+
+/* ---------- Custos de Logística ---------- */
+
+function renderCustosLogistica() {
+  const db = Store.get();
+  document.getElementById("custoKmValor").textContent = formatBRL(db.logisticsConfig.custoPorKm) + " / km";
+
+  const container = document.getElementById("custosLogisticaTabela");
+  if (!db.logisticsRoutes.length) {
+    container.innerHTML = reusableTable(
+      ["Fornecedor", "Origem", "Destino", "Distância", "Custo calculado", ""],
+      "Nenhuma rota cadastrada",
+      "Clique em \"Nova rota\" para cadastrar o deslocamento até um fornecedor."
+    );
+    return;
+  }
+  const rows = db.logisticsRoutes.map(rota => {
+    const fornecedor = getSupplierById(rota.fornecedorId);
+    const custo = rota.distanciaKm * db.logisticsConfig.custoPorKm;
+    return `
+      <tr>
+        <td><strong style="color:var(--color-text-900);">${fornecedor ? escapeHtml(fornecedor.nome) : "Fornecedor removido"}</strong></td>
+        <td>${escapeHtml(rota.origem)}</td>
+        <td>${escapeHtml(rota.destino)}</td>
+        <td class="num">${formatNum(rota.distanciaKm)} km</td>
+        <td class="num" style="font-weight:600;">${formatBRL(custo)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" data-edit-rota="${rota.id}" title="Editar" type="button"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button class="icon-btn danger" data-del-rota="${rota.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+  container.innerHTML = dataTable(["Fornecedor", "Origem", "Destino", "Distância", "Custo calculado", ""], [rows]);
+
+  document.querySelectorAll("[data-edit-rota]").forEach(btn =>
+    btn.addEventListener("click", () => abrirFormularioRotaLogistica(btn.getAttribute("data-edit-rota"))));
+  document.querySelectorAll("[data-del-rota]").forEach(btn =>
+    btn.addEventListener("click", () => confirmarExclusaoRotaLogistica(btn.getAttribute("data-del-rota"))));
+}
+
+function abrirEditarCustoKm() {
+  const db = Store.get();
+  openModal({
+    title: "Custo médio por KM",
+    bodyHtml: `
+      <div class="field"><label>Valor por KM (R$)</label><input type="number" step="0.01" id="fCustoKm" value="${db.logisticsConfig.custoPorKm}"></div>
+      <div class="hint">Esse valor é usado para calcular automaticamente o custo logístico de cada rota cadastrada.</div>
+    `,
+    footerHtml: `<button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button><button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>`,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const valor = parseFloat(document.getElementById("fCustoKm").value);
+        if (isNaN(valor) || valor < 0) { Toast.show("Informe um valor válido.", "error"); return; }
+        db.logisticsConfig.custoPorKm = valor;
+        Store.persist();
+        closeModal();
+        Toast.show("Custo por KM atualizado.");
+        renderCustosLogistica();
+      });
+    }
+  });
+}
+
+function abrirFormularioRotaLogistica(id) {
+  const db = Store.get();
+  const rota = id ? db.logisticsRoutes.find(r => r.id === id) : null;
+  openModal({
+    title: rota ? "Editar rota de deslocamento" : "Nova rota de deslocamento",
+    bodyHtml: `
+      <div class="field"><label>Fornecedor</label><select id="fRotaFornecedor">${fornecedorOptionsHtml(rota ? rota.fornecedorId : null)}</select></div>
+      <div class="field-row">
+        <div class="field"><label>Origem</label><input id="fRotaOrigem" value="${escapeHtml(rota ? rota.origem : "Local do administrador")}"></div>
+        <div class="field"><label>Destino</label><input id="fRotaDestino" value="${escapeHtml(rota ? rota.destino : "")}"></div>
+      </div>
+      <div class="field"><label>Distância (km)</label><input type="number" step="0.1" id="fRotaDistancia" value="${rota ? rota.distanciaKm : ""}" placeholder="Ex: 7"></div>
+    `,
+    footerHtml: `<button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button><button class="btn btn-primary" id="modalSaveBtn" type="button">Salvar</button>`,
+    onOpen: () => {
+      document.getElementById("modalSaveBtn").addEventListener("click", () => {
+        const distancia = parseFloat(document.getElementById("fRotaDistancia").value);
+        if (isNaN(distancia) || distancia < 0) { Toast.show("Informe uma distância válida.", "error"); return; }
+        const data = {
+          fornecedorId: document.getElementById("fRotaFornecedor").value || null,
+          origem: document.getElementById("fRotaOrigem").value.trim(),
+          destino: document.getElementById("fRotaDestino").value.trim(),
+          distanciaKm: distancia
+        };
+        if (rota) {
+          Object.assign(rota, data);
+        } else {
+          db.logisticsRoutes.push(Object.assign({ id: uid("rota") }, data));
+        }
+        Store.persist();
+        closeModal();
+        Toast.show(rota ? "Rota atualizada." : "Rota cadastrada.");
+        renderCustosLogistica();
+      });
+    }
+  });
+}
+
+function confirmarExclusaoRotaLogistica(id) {
+  const db = Store.get();
+  confirmModal("Excluir rota", "Tem certeza que deseja excluir esta rota de deslocamento?", () => {
+    db.logisticsRoutes = db.logisticsRoutes.filter(r => r.id !== id);
+    Store.persist();
+    Toast.show("Rota excluída.");
+    renderCustosLogistica();
+  }, "Excluir");
+}
+
+/* ---------- Sub-aba Custos → Marketing (leitura integrada, sem cadastro duplicado) ---------- */
+
+function renderCustosMarketing() {
+  const db = Store.get();
+
+  // Totais consolidados: investimento em anúncios (todas as plataformas) + custos extras de marketing
+  const totalAnuncios = db.marketingDaily.reduce((s, r) => s + (r.custo || 0), 0);
+  const totalCustosExtras = db.marketingCosts.reduce((s, c) => s + (c.valor || 0), 0);
+  const totalGeral = totalAnuncios + totalCustosExtras;
+  const totalVendasAnuncios = db.marketingDaily.reduce((s, r) => s + (r.vendas || 0), 0);
+  const hasAlgumDado = db.marketingDaily.length > 0 || db.marketingCosts.length > 0;
+
+  document.getElementById("custosMktKpis").innerHTML = [
+    kpiCard({ label: "Investimento em anúncios", value: hasAlgumDado ? formatBRL(totalAnuncios) : "Sem dados cadastrados", isEmpty: !hasAlgumDado, tone: "amber",
+      icon: `<path d="M12 5v14M5 12h14"/>` }),
+    kpiCard({ label: "Custos extras de marketing", value: hasAlgumDado ? formatBRL(totalCustosExtras) : "Sem dados cadastrados", isEmpty: !hasAlgumDado, tone: "purple",
+      icon: `<path d="M5 12h14"/>` }),
+    kpiCard({ label: "Total investido em marketing", value: hasAlgumDado ? formatBRL(totalGeral) : "Sem dados cadastrados", isEmpty: !hasAlgumDado, tone: "green",
+      icon: `<path d="M3 17 9 11l4 4 8-8"/><path d="M15 6h6v6"/>` }),
+    kpiCard({ label: "Vendas geradas por anúncios", value: hasAlgumDado ? formatNum(totalVendasAnuncios) : "Sem dados cadastrados", isEmpty: !hasAlgumDado,
+      icon: `<rect x="3" y="7" width="13" height="12" rx="1.5"/>` })
+  ].join("");
+
+  // Investimento por plataforma
+  const porPlataforma = {};
+  db.marketingDaily.forEach(r => {
+    porPlataforma[r.plataformaId] = porPlataforma[r.plataformaId] || { impressoes: 0, cliques: 0, custo: 0, whatsapp: 0, vendas: 0 };
+    porPlataforma[r.plataformaId].impressoes += (r.impressoes || 0);
+    porPlataforma[r.plataformaId].cliques += (r.cliques || 0);
+    porPlataforma[r.plataformaId].custo += (r.custo || 0);
+    porPlataforma[r.plataformaId].whatsapp += (r.whatsapp || 0);
+    porPlataforma[r.plataformaId].vendas += (r.vendas || 0);
+  });
+  const plataformasContainer = document.getElementById("custosMktPlataformasTabela");
+  const entradasPlataformas = Object.entries(porPlataforma);
+  if (!entradasPlataformas.length) {
+    plataformasContainer.innerHTML = reusableTable(
+      ["Plataforma", "Impressões", "Cliques", "Investido", "WhatsApp", "Vendas"],
+      "Nenhum lançamento de campanha ainda",
+      "Registre o fechamento diário na guia Marketing para ver o consolidado aqui."
+    );
+  } else {
+    const rowsPlataformas = entradasPlataformas.map(([plataformaId, v]) => {
+      const plataforma = db.marketingPlatforms.find(p => p.id === plataformaId);
+      return `
+        <tr>
+          <td><strong style="color:var(--color-text-900);">${plataforma ? escapeHtml(plataforma.nome) : "Plataforma removida"}</strong></td>
+          <td class="num">${formatNum(v.impressoes)}</td>
+          <td class="num">${formatNum(v.cliques)}</td>
+          <td class="num" style="font-weight:600;">${formatBRL(v.custo)}</td>
+          <td class="num">${formatNum(v.whatsapp)}</td>
+          <td class="num">${formatNum(v.vendas)}</td>
+        </tr>
+      `;
+    }).join("");
+    plataformasContainer.innerHTML = dataTable(["Plataforma", "Impressões", "Cliques", "Investido", "WhatsApp", "Vendas"], [rowsPlataformas]);
+  }
+
+  // Custos extras de marketing (mesma listagem da guia Marketing, somente leitura)
+  const custosContainer = document.getElementById("custosMktCustosTabela");
+  if (!db.marketingCosts.length) {
+    custosContainer.innerHTML = reusableTable(
+      ["Tipo", "Categoria", "Descrição", "Valor", "Período"],
+      "Nenhum custo de marketing registrado",
+      "Registre designer, artes, ferramentas e outros custos na guia Marketing."
+    );
+  } else {
+    const registrosCustos = [...db.marketingCosts].sort((a, b) => (b.data || b.mes || "").localeCompare(a.data || a.mes || ""));
+    const rowsCustos = registrosCustos.map(c => {
+      const periodo = c.tipo === "mensal" ? (c.mes ? formatMonthLabel(c.mes) + " · mensal" : "Mensal") : formatDateBR(c.data);
+      return `
+        <tr>
+          <td><span class="badge tone-${c.tipo === "mensal" ? "blue" : "gray"}">${c.tipo === "mensal" ? "Mensal" : "Pontual"}</span></td>
+          <td>${escapeHtml(c.categoria)}</td>
+          <td>${escapeHtml(c.descricao || "—")}</td>
+          <td class="num" style="font-weight:600;">${formatBRL(c.valor)}</td>
+          <td>${periodo}</td>
+        </tr>
+      `;
+    }).join("");
+    custosContainer.innerHTML = dataTable(["Tipo", "Categoria", "Descrição", "Valor", "Período"], [rowsCustos]);
+  }
+
+  const btnIrMkt = document.getElementById("btnIrParaMarketing");
+  if (btnIrMkt) btnIrMkt.onclick = () => showPage("marketing");
+}
+
+function bindCustosPageEvents() {
+  document.querySelectorAll("#custosTabRow [data-custos-tab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      custosTabAtual = btn.getAttribute("data-custos-tab");
+      renderCustos();
+    });
+  });
+  document.getElementById("btnNovoCustoFornecedor").addEventListener("click", () => abrirFormularioCustoFornecedor(null));
+  document.getElementById("btnEditarCustoKm").addEventListener("click", abrirEditarCustoKm);
+  document.getElementById("btnNovaRotaLogistica").addEventListener("click", () => abrirFormularioRotaLogistica(null));
+}
+/* ==========================================================================
+   ROTEAMENTO E INICIALIZAÇÃO
+   ========================================================================== */
+
+let currentPage = "dashboard";
+
+const PAGE_RENDERERS = {
+  dashboard: renderDashboard,
+  produtos: () => renderProdutos(document.getElementById("produtoSearch").value),
+  fornecedores: () => renderFornecedores(document.getElementById("fornecedorSearch").value),
+  clientes: () => renderClientes(document.getElementById("clienteSearch").value),
+  pedidos: renderPedidos,
+  financeiro: renderFinanceiroPage,
+  custos: renderCustos,
+  estoque: () => renderEstoque(document.getElementById("estoqueSearch").value),
+  marketing: renderMarketing,
+  relatorios: renderRelatorios,
+  configuracoes: renderConfiguracoes
+};
+
+function showPage(pageId) {
+  if (!PAGE_META[pageId]) return;
+  currentPage = pageId;
+  document.querySelectorAll(".page-section").forEach(sec => sec.style.display = "none");
+  document.getElementById("page-" + pageId).style.display = "";
+  renderSidebar(pageId);
+  renderTopbar(PAGE_META[pageId].title, PAGE_META[pageId].crumb);
+  const renderer = PAGE_RENDERERS[pageId];
+  if (renderer) renderer();
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+}
+
+function refreshSidebarBadges() {
+  renderSidebar(currentPage);
+}
+
+function renderApp() {
+  renderSidebar(currentPage);
+  renderTopbar(PAGE_META[currentPage].title, PAGE_META[currentPage].crumb);
+  const renderer = PAGE_RENDERERS[currentPage];
+  if (renderer) renderer();
+}
+
+function bindGlobalSearchInputs() {
+  const produtoSearch = document.getElementById("produtoSearch");
+  produtoSearch.addEventListener("input", () => renderProdutos(produtoSearch.value));
+
+  const fornecedorSearch = document.getElementById("fornecedorSearch");
+  fornecedorSearch.addEventListener("input", () => renderFornecedores(fornecedorSearch.value));
+
+  const clienteSearch = document.getElementById("clienteSearch");
+  clienteSearch.addEventListener("input", () => renderClientes(clienteSearch.value));
+
+  const estoqueSearch = document.getElementById("estoqueSearch");
+  estoqueSearch.addEventListener("input", () => renderEstoque(estoqueSearch.value));
+}
+
+function bindCreationButtons() {
+  document.getElementById("btnNovoProduto").addEventListener("click", () => abrirFormularioProduto(null));
+  document.getElementById("btnNovoFornecedor").addEventListener("click", () => abrirFormularioFornecedor(null));
+  document.getElementById("btnNovoCliente").addEventListener("click", () => abrirFormularioCliente(null));
+  document.getElementById("btnNovoPedido").addEventListener("click", () => abrirFormularioPedido());
+  document.getElementById("btnNovaDespesa").addEventListener("click", () => abrirFormularioLancamento("despesa"));
+  document.getElementById("btnNovaReceita").addEventListener("click", () => abrirFormularioLancamento("receita"));
+  document.getElementById("btnNovoEstoque").addEventListener("click", () => abrirFormularioEstoque(null));
+  document.getElementById("btnRegistrarDiaMkt").addEventListener("click", () => abrirFormularioMarketingDia(ensureMarketingPlataformaAtual(), null));
+  document.getElementById("btnNovaPlataforma").addEventListener("click", () => abrirFormularioNovaPlataforma());
+  document.getElementById("btnNovoCustoMkt").addEventListener("click", () => abrirFormularioMarketingCusto(null));
+  bindCustosPageEvents();
+}
+
+function bindFilterChips() {
+  document.querySelectorAll("#pedidoFiltros .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.querySelectorAll("#pedidoFiltros .chip").forEach(c => c.classList.remove("chip--active"));
+      chip.classList.add("chip--active");
+      pedidoFiltroAtual = chip.getAttribute("data-status");
+      renderPedidos();
+    });
+  });
+  document.querySelectorAll("#finFiltros .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.querySelectorAll("#finFiltros .chip").forEach(c => c.classList.remove("chip--active"));
+      chip.classList.add("chip--active");
+      financeiroFiltroAtual = chip.getAttribute("data-tipo");
+      renderFinanceiroTabela();
+    });
+  });
+}
+
+function bindPeriodSelectors() {
+  document.getElementById("dashPeriodo").addEventListener("change", renderDashboard);
+  document.getElementById("relPeriodo").addEventListener("change", renderRelatorios);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  Store.load();
+  aplicarTema(Store.get().settings.tema);
+  bindGlobalSearchInputs();
+  bindCreationButtons();
+  bindFilterChips();
+  bindPeriodSelectors();
+  showPage("dashboard");
+});
+</script>
+</html>
