@@ -163,7 +163,7 @@
   <script src="core.js"></script>
   <script>
 /* Nesta tela standalone não existe sidebar com contadores — função vazia
-   apenas para não quebrar as chamadas herdadas de sistema-grafica.html */
+   apenas para não quebrar as chamadas herdadas de index.html */
 function refreshSidebarBadges() {}
 
 function refreshOrcamentoClienteOptions() {
@@ -609,7 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initOrcamentosPage();
 
   document.getElementById("btnVoltarSistema").addEventListener("click", () => {
-    window.location.href = "sistema-grafica.html";
+    window.location.href = "index.html";
   });
 });
   </script>
