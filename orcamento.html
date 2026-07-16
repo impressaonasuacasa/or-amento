@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orçamento PDV — Impressão na Sua Casa</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Ajustes exclusivos desta tela: como não há sidebar, o .content
+     não deve herdar o recuo lateral usado no sistema principal. */
+  body{ background:var(--color-bg); }
+  .content{ max-width:1180px; margin:0 auto; }
+  .pdv-topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 32px; background:var(--color-white);
+    border-bottom:1px solid var(--color-border-soft);
+    position:sticky; top:0; z-index:50;
+  }
+  .pdv-topbar__brand{ display:flex; align-items:center; gap:10px; }
+  .pdv-topbar__brand-text{ display:flex; flex-direction:column; line-height:1.25; }
+  .pdv-topbar__brand-name{ font-weight:700; font-size:13.5px; color:var(--color-text-900); }
+  .pdv-topbar__brand-sub{ font-size:11.5px; color:var(--color-text-500); }
+</style>
+</head>
+<body>
+
+  <header class="pdv-topbar">
+    <div class="pdv-topbar__brand">
+      <svg class="reg-mark" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><line x1="12" y1="1" x2="12" y2="23"/><line x1="1" y1="12" x2="23" y2="12"/></svg>
+      <div class="pdv-topbar__brand-text">
+        <span class="pdv-topbar__brand-name">Impressão na Sua Casa</span>
+        <span class="pdv-topbar__brand-sub">Orçamento · PDV</span>
+      </div>
+    </div>
+    <button class="btn btn-secondary" id="btnVoltarSistema" type="button">
+      <svg viewBox="0 0 24 24"><path d="M11 5 4 12l7 7M4 12h16"/></svg>
+      Voltar ao sistema
+    </button>
+  </header>
+
+  <main class="content">
+
+      <section id="page-orcamentos" class="page-section">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h1>Orçamento rápido</h1>
+            <p>Escolha o produto no catálogo, ajuste a quantidade e o sistema calcula custo, lucro e margem automaticamente.</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="link-btn" id="btnVerOrcamentos" type="button">Ver histórico de orçamentos →</button>
+          </div>
+        </div>
+
+        <div class="pdv-layout">
+          <!-- Coluna esquerda: catálogo -->
+          <div class="stack">
+            <div class="card card-pad">
+              <div class="toolbar__filters" id="orcCategoriaChips" style="margin-bottom:0;"></div>
+            </div>
+            <div id="orcCatalogoGrid" class="pdv-catalog-grid"></div>
+
+            <div class="card panel" id="orcSelecaoPanel" style="display:none;">
+              <div class="panel__header"><h3>Detalhes do item</h3></div>
+              <div class="field">
+                <label>Material</label>
+                <select id="orcMaterial"></select>
+              </div>
+              <div class="field-row" id="orcQtdLadoRow">
+                <div class="field" id="orcQtdWrapper">
+                  <label id="orcQtdLabel">Quantidade</label>
+                  <select id="orcQtdSelect" style="display:none;"></select>
+                  <input type="number" id="orcQtdInput" style="display:none;" placeholder="Ex: 100">
+                </div>
+                <div class="field" id="orcLadoWrapper">
+                  <label>Impressão</label>
+                  <select id="orcLado">
+                    <option value="frente">Frente</option>
+                    <option value="fv">Frente e verso</option>
+                  </select>
+                </div>
+              </div>
+              <select id="orcProduto" style="display:none;"></select>
+            </div>
+          </div>
+
+          <!-- Coluna direita: ticket / resumo (sticky) -->
+          <div class="pdv-ticket-col">
+            <div class="card panel pdv-ticket">
+              <div class="panel__header">
+                <h3>Ticket do orçamento</h3>
+                <span class="badge tone-gray">Painel interno</span>
+              </div>
+
+              <div id="orcItemSelecionado" class="text-muted">Selecione um produto no catálogo ao lado.</div>
+
+              <div class="field">
+                <label>Cliente</label>
+                <select id="orcClienteSelect">
+                  <option value="">Cliente avulso (não cadastrado)</option>
+                </select>
+              </div>
+              <div class="field" id="orcClienteAvulsoWrapper">
+                <label>Nome do cliente avulso</label>
+                <input type="text" id="orcClienteAvulso" placeholder="Ex: Mariana Prado">
+              </div>
+
+              <div class="field">
+                <label>KM do fornecedor até o cliente <span class="text-muted" style="font-weight:400; font-size:12px;">(logística variável — muda a cada pedido)</span></label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="number" id="orcKmCliente" placeholder="Ex: 22" min="0" step="0.1" style="max-width:120px;" oninput="atualizarPreviaOrcamento()">
+                  <span class="text-muted" style="font-size:12.5px;" id="orcKmClienteCalc"></span>
+                </div>
+                <div class="text-muted" style="font-size:12px; margin-top:4px;">Distância da entrega × R$ 0,50/km = custo de logística variável. Entra no cálculo interno de lucro.</div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label>Frete</label>
+                  <select id="orcFrete">
+                    <option value="Entrega grátis no Guarujá" selected>Entrega grátis no Guarujá</option>
+                    <option value="Frete a combinar">Frete a combinar</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Pagamento</label>
+                  <input type="text" id="orcPagamento" value="Pagamento realizado somente no recebimento do produto">
+                </div>
+              </div>
+
+              <hr class="divider">
+
+              <div>
+                <div class="text-muted" style="margin-bottom:8px; font-weight:600;">Análise de margem (não é enviada ao cliente)</div>
+                <div id="orcAdminPanel">
+                  <div class="chart-placeholder" style="height:150px;">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/></svg>
+                    <span>Selecione um produto para ver custo, lucro e margem aqui.</span>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" id="btnGerarOrcamento" type="button" style="margin-top:4px;">
+                <svg viewBox="0 0 24 24"><path d="M9 12.5 11 15l4-5"/><circle cx="12" cy="12" r="9"/></svg>
+                Gerar orçamento
+              </button>
+              <div id="orcErro"></div>
+            </div>
+
+            <div class="card panel" id="orcMensagemPanel" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="card panel" style="margin-top:18px;">
+          <div class="panel__header"><h3>Orçamentos recentes</h3></div>
+          <div id="orcHistorico"></div>
+        </div>
+      </section>
+
+  </main>
+
+  <div id="toast-host" class="toast-host"></div>
+
+  <script src="core.js"></script>
+  <script>
+/* Nesta tela standalone não existe sidebar com contadores — função vazia
+   apenas para não quebrar as chamadas herdadas de sistema-grafica.html */
+function refreshSidebarBadges() {}
+
+function refreshOrcamentoClienteOptions() {
+  const sel = document.getElementById("orcClienteSelect");
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = clienteOptionsHtml(current);
+}
+
+function popularSelectProdutos() {
+  const sel = document.getElementById("orcProduto");
+  const produtos = Store.get().products;
+  sel.innerHTML = produtos.map(p => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
+}
+
+let orcCategoriaAtual = "todas";
+const PRODUTO_ICONS = {
+  "Cartões": `<path d="M3 6h18v12H3Z"/><path d="M7 15h4M7 11.5h.01"/>`,
+  "Panfletos": `<path d="M4 4h13l3 3v13H4Z"/><path d="M17 4v3h3"/><path d="M8 12h8M8 15h5"/>`,
+  "Impressões": `<path d="M6 9V3h12v6"/><path d="M6 18h12v3H6Z"/><path d="M4 9h16v7H4Z"/>`
+};
+function iconeParaCategoria(categoria) {
+  return PRODUTO_ICONS[categoria] || `<path d="M20.5 7.3 12 12l-8.5-4.7M12 12v9M3.5 7.3 12 3l8.5 4.3v9.4L12 21l-8.5-4.3Z"/>`;
+}
+
+function renderOrcCategoriaChips() {
+  const produtos = Store.get().products;
+  const categorias = [...new Set(produtos.map(p => p.categoria || "Outros"))];
+  const chips = ["todas", ...categorias];
+  document.getElementById("orcCategoriaChips").innerHTML = chips.map(c => `
+    <span class="chip ${c === orcCategoriaAtual ? "chip--active" : ""}" data-cat="${escapeHtml(c)}">${c === "todas" ? "Todas as categorias" : escapeHtml(c)}</span>
+  `).join("");
+  document.querySelectorAll("#orcCategoriaChips [data-cat]").forEach(chip => {
+    chip.addEventListener("click", () => {
+      orcCategoriaAtual = chip.getAttribute("data-cat");
+      renderOrcCategoriaChips();
+      renderOrcCatalogoGrid();
+    });
+  });
+}
+
+function renderOrcCatalogoGrid() {
+  const produtos = Store.get().products.filter(p => orcCategoriaAtual === "todas" || (p.categoria || "Outros") === orcCategoriaAtual);
+  const grid = document.getElementById("orcCatalogoGrid");
+  const selecionadoId = document.getElementById("orcProduto").value;
+  if (!produtos.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;">${emptyStateHtml("Nenhum produto nessa categoria", "Cadastre produtos na guia Produtos para vê-los aqui.")}</div>`;
+    return;
+  }
+  grid.innerHTML = produtos.map(p => `
+    <button class="pdv-card ${p.id === selecionadoId ? "selected" : ""}" data-pdv-produto="${p.id}" type="button">
+      <div class="pdv-card__icon"><svg viewBox="0 0 24 24">${iconeParaCategoria(p.categoria)}</svg></div>
+      <div class="pdv-card__name">${escapeHtml(p.nome)}</div>
+      <div class="pdv-card__meta">${(p.materiais || []).length} material(is) · ${escapeHtml(p.categoria || "Outros")}</div>
+    </button>
+  `).join("");
+  document.querySelectorAll("[data-pdv-produto]").forEach(btn =>
+    btn.addEventListener("click", () => selecionarProdutoPDV(btn.getAttribute("data-pdv-produto"))));
+}
+
+function selecionarProdutoPDV(produtoId) {
+  document.getElementById("orcProduto").value = produtoId;
+  renderOrcCatalogoGrid();
+  popularSelectMateriais(produtoId);
+  atualizarCamposQuantidade();
+  document.getElementById("orcSelecaoPanel").style.display = "";
+  const produto = getProductById(produtoId);
+  document.getElementById("orcItemSelecionado").innerHTML = `<span class="badge tone-blue">Selecionado</span> <strong style="color:var(--color-text-900); margin-left:6px;">${escapeHtml(produto.nome)}</strong>`;
+  renderOrcAdminPanel(null);
+  document.getElementById("orcMensagemPanel").style.display = "none";
+}
+
+function popularSelectMateriais(produtoId) {
+  const produto = getProductById(produtoId);
+  const sel = document.getElementById("orcMaterial");
+  if (!produto) { sel.innerHTML = ""; return; }
+  sel.innerHTML = (produto.materiais || []).map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join("");
+}
+
+function atualizarCamposQuantidade() {
+  const produto = getProductById(document.getElementById("orcProduto").value);
+  const material = produto ? (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value) : null;
+  const qtdSelect = document.getElementById("orcQtdSelect");
+  const qtdInput = document.getElementById("orcQtdInput");
+  const ladoWrapper = document.getElementById("orcLadoWrapper");
+  const qtdLabel = document.getElementById("orcQtdLabel");
+
+  if (!produto || !material) { qtdSelect.style.display = "none"; qtdInput.style.display = "none"; return; }
+
+  if (produto.modoPreco === "tiers") {
+    qtdLabel.textContent = "Quantidade";
+    qtdSelect.style.display = "";
+    qtdInput.style.display = "none";
+    qtdSelect.innerHTML = (material.tiers || []).map(t => `<option value="${t.qtd}">${formatNum(t.qtd)} unidades</option>`).join("");
+    ladoWrapper.style.display = "";
+  } else if (produto.modoPreco === "faixas") {
+    qtdLabel.textContent = `Quantidade (mínimo ${produto.qtdMinima || 1})`;
+    qtdSelect.style.display = "none";
+    qtdInput.style.display = "";
+    qtdInput.min = produto.qtdMinima || 1;
+    qtdInput.value = qtdInput.value || (produto.qtdMinima || 1);
+    ladoWrapper.style.display = "none";
+  } else {
+    qtdLabel.textContent = "Quantidade";
+    qtdSelect.style.display = "none";
+    qtdInput.style.display = "";
+    qtdInput.min = 1;
+    qtdInput.value = qtdInput.value || 1;
+    ladoWrapper.style.display = "none";
+  }
+}
+
+function calcularOrcamentoAtual() {
+  const produto = getProductById(document.getElementById("orcProduto").value);
+  if (!produto) return { erro: "Cadastre ao menos um produto para gerar orçamentos." };
+  const material = (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value);
+  if (!material) return { erro: "Este produto ainda não tem nenhum material cadastrado." };
+
+  const lado = document.getElementById("orcLado").value;
+  let quantidade, custoTotal, vendaTotal;
+
+  if (produto.modoPreco === "tiers") {
+    quantidade = parseFloat(document.getElementById("orcQtdSelect").value);
+    const tier = (material.tiers || []).find(t => t.qtd === quantidade);
+    if (!tier) return { erro: "Quantidade não encontrada na tabela deste material." };
+    const custo = lado === "fv" ? tier.custoFV : tier.custoFrente;
+    const venda = lado === "fv" ? tier.vendaFV : tier.vendaFrente;
+    if (custo === null || custo === undefined) return { erro: "Custo não cadastrado para essa combinação de quantidade e impressão." };
+    if (venda === null || venda === undefined) return { erro: "Preço de venda não cadastrado para essa combinação de quantidade e impressão." };
+    custoTotal = custo; vendaTotal = venda;
+  } else if (produto.modoPreco === "faixas") {
+    quantidade = parseInt(document.getElementById("orcQtdInput").value, 10);
+    if (!quantidade || quantidade < (produto.qtdMinima || 1)) return { erro: `Informe uma quantidade válida (mínimo ${produto.qtdMinima || 1}).` };
+    const faixa = buscarFaixa(material.faixas, quantidade);
+    if (!faixa) return { erro: "Não existe faixa de preço cadastrada para essa quantidade." };
+    if (faixa.custo === null) return { erro: "Custo não cadastrado para essa faixa de quantidade." };
+    if (faixa.venda === null) return { erro: "Preço de venda não cadastrado para essa faixa de quantidade." };
+    custoTotal = faixa.custo * quantidade; vendaTotal = faixa.venda * quantidade;
+  } else {
+    quantidade = parseInt(document.getElementById("orcQtdInput").value, 10);
+    if (!quantidade || quantidade < 1) return { erro: "Informe uma quantidade válida." };
+    if (material.custo === null || material.custo === undefined) return { erro: "Custo não cadastrado para este material." };
+    if (material.venda === null || material.venda === undefined) return { erro: "Preço de venda não cadastrado para este material." };
+    custoTotal = material.custo * quantidade; vendaTotal = material.venda * quantidade;
+  }
+
+  const margem = calcularMargem(custoTotal, vendaTotal);
+
+  // Logística variável: KM do fornecedor até o cliente
+  const kmClienteEl = document.getElementById("orcKmCliente");
+  const kmCliente = kmClienteEl && kmClienteEl.value !== "" ? parseFloat(kmClienteEl.value) : null;
+
+  return { produto, material, quantidade, lado, ...margem, kmCliente, erro: null };
+}
+
+function renderOrcAdminPanel(calc) {
+  const el = document.getElementById("orcAdminPanel");
+  if (!calc || calc.erro) {
+    el.innerHTML = `<div class="chart-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/></svg><span>${escapeHtml(calc && calc.erro ? calc.erro : "Selecione um produto para ver o custo e a margem aqui.")}</span></div>`;
+    return;
+  }
+  const classe = classificarMargem(calc.margemPct, Store.get().settings);
+  const fornecedor = getSupplierById(calc.material.fornecedorId);
+  el.innerHTML = `
+    <div class="grid-2" style="gap:14px;">
+      <div><div class="text-muted">Fornecedor</div><div style="font-weight:600;">${fornecedor ? escapeHtml(fornecedor.nome) : "Não vinculado"}</div></div>
+      <div><div class="text-muted">Quantidade</div><div style="font-weight:600;">${formatNum(calc.quantidade)} un.</div></div>
+      <div><div class="text-muted">Custo total</div><div class="mono" style="font-weight:600;">${formatBRL(calc.custo)}</div></div>
+      <div><div class="text-muted">Valor de venda</div><div class="mono" style="font-weight:600;">${formatBRL(calc.venda)}</div></div>
+      <div><div class="text-muted">Lucro estimado</div><div class="mono" style="font-weight:700; color:var(--color-green-700);">${formatBRL(calc.lucro)}</div></div>
+      <div><div class="text-muted">Margem</div><span class="badge tone-${classe.tone}">${calc.margemPct.toFixed(1)}% · ${classe.label}</span></div>
+    </div>
+    ${custoLogisticoAdendoHtml(calc)}
+  `;
+}
+
+function custoLogisticoAdendoHtml(calc) {
+  const custoLogisticoFixo = custoLogisticoDoFornecedor(calc.material.fornecedorId);
+  const db = Store.get();
+  const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+
+  // Logística variável: KM fornecedor → cliente
+  const kmCliente = (calc.kmCliente != null && !isNaN(calc.kmCliente) && calc.kmCliente > 0) ? calc.kmCliente : null;
+  const custoLogisticoVariavel = kmCliente !== null ? kmCliente * custoPorKm : null;
+
+  if (custoLogisticoFixo === null && custoLogisticoVariavel === null) {
+    return `<div class="text-muted" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--color-border-soft);">Custo de logística não cadastrado para este fornecedor — veja a guia <strong>Custos → Custos de Logística</strong>. Para logística variável, preencha o campo "KM até o cliente" acima.</div>`;
+  }
+
+  const logFixoTexto = custoLogisticoFixo !== null
+    ? formatBRL(custoLogisticoFixo)
+    : "Não cadastrado";
+  const logVarTexto = custoLogisticoVariavel !== null
+    ? `${kmCliente} km × ${formatBRL(custoPorKm)}/km = ${formatBRL(custoLogisticoVariavel)}`
+    : "KM não informado";
+
+  const totalLogistica = (custoLogisticoFixo || 0) + (custoLogisticoVariavel || 0);
+  const custoTotalReal = (calc.custo || 0) + totalLogistica;
+  const lucroLiquidoReal = (calc.venda || 0) - custoTotalReal;
+  const margemReal = calc.venda > 0 ? (lucroLiquidoReal / calc.venda) * 100 : null;
+  const classeReal = classificarMargem(margemReal, db.settings);
+
+  return `
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--color-border-soft);">
+      <div class="text-muted" style="font-weight:600; margin-bottom:8px;">Análise de custo real (com logística)</div>
+      <div class="grid-2" style="gap:14px;">
+        <div><div class="text-muted">Preço de venda</div><div class="mono" style="font-weight:600;">${formatBRL(calc.venda)}</div></div>
+        <div><div class="text-muted">Custo fornecedor</div><div class="mono" style="font-weight:600;">${formatBRL(calc.custo)}</div></div>
+        <div><div class="text-muted">Logística fixa (admin → fornecedor)</div><div class="mono" style="font-weight:600;">${logFixoTexto}</div></div>
+        <div><div class="text-muted">Logística variável (fornecedor → cliente)</div><div class="mono" style="font-weight:600;">${logVarTexto}</div></div>
+        <div><div class="text-muted">Custo total</div><div class="mono" style="font-weight:700;">${formatBRL(custoTotalReal)}</div></div>
+        <div><div class="text-muted">Lucro líquido</div><div class="mono" style="font-weight:700; color:var(--color-green-700);">${formatBRL(lucroLiquidoReal)}</div></div>
+        <div style="grid-column:1/-1;"><div class="text-muted">Margem percentual</div><span class="badge tone-${classeReal.tone}">${margemReal !== null ? margemReal.toFixed(1) + "%" : "—"} · ${classeReal.label}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+function gerarMensagemWhatsApp(budget) {
+  const linhas = [
+    `Olá! Segue o orçamento solicitado:`,
+    ``,
+    `🖨️ *${budget.produtoNome}*${budget.materialNome ? " — " + budget.materialNome : ""}`,
+    `Quantidade: ${formatNum(budget.quantidade)} unidades`,
+    `Valor: *${formatBRL(budget.vendaTotal)}*`,
+    ``,
+    `🚚 ${budget.frete}`,
+    `💳 ${budget.pagamento}`,
+    ``,
+    `Qualquer dúvida, estou à disposição!`
+  ];
+  return linhas.join("\n");
+}
+
+function renderOrcMensagemPanel(budget) {
+  const el = document.getElementById("orcMensagemPanel");
+  if (!budget) { el.innerHTML = ""; el.style.display = "none"; return; }
+  el.style.display = "";
+  const encoded = encodeURIComponent(budget.mensagem);
+  el.innerHTML = `
+    <div class="panel__header"><h3>Mensagem para o cliente</h3></div>
+    <textarea readonly style="min-height:170px; font-family:var(--font-mono); font-size:12.5px; white-space:pre-wrap;">${escapeHtml(budget.mensagem)}</textarea>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn btn-whatsapp" href="https://wa.me/?text=${encoded}" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M4 20l1.4-4.1A8 8 0 1 1 9 18.6Z"/><path d="M9 10.5c0 3 2.5 5.5 5.5 5.5"/></svg>
+        Enviar pelo WhatsApp
+      </a>
+      <button class="btn btn-secondary" id="btnCopiarMensagem" type="button">Copiar mensagem</button>
+      <button class="btn btn-primary" id="btnConverterPedidoAgora" type="button">Converter em pedido</button>
+    </div>
+  `;
+  document.getElementById("btnCopiarMensagem").addEventListener("click", () => {
+    navigator.clipboard.writeText(budget.mensagem).then(() => Toast.show("Mensagem copiada."));
+  });
+  document.getElementById("btnConverterPedidoAgora").addEventListener("click", () => converterOrcamentoEmPedido(budget.id));
+}
+
+function renderOrcHistorico() {
+  const db = Store.get();
+  const budgets = [...db.budgets].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 20);
+  const el = document.getElementById("orcHistorico");
+  if (!budgets.length) {
+    el.innerHTML = emptyStateHtml("Nenhum orçamento gerado ainda", "Os orçamentos que você gerar acima aparecerão aqui.");
+    return;
+  }
+  const rows = budgets.map(b => {
+    const cliente = getClientById(b.clienteId);
+    const nome = cliente ? cliente.nome : (b.clienteNomeLivre || "Cliente avulso");
+    const statusBadge = b.status === "convertido_pedido"
+      ? `<span class="badge tone-green">Virou pedido</span>`
+      : `<span class="badge tone-blue">Gerado</span>`;
+    return `
+      <tr>
+        <td><strong style="color:var(--color-text-900);">${escapeHtml(nome)}</strong></td>
+        <td>${escapeHtml(b.produtoNome)}${b.materialNome ? `<div class="text-muted">${escapeHtml(b.materialNome)}</div>` : ""}</td>
+        <td class="num">${formatNum(b.quantidade)}</td>
+        <td class="num">${formatBRL(b.vendaTotal)}</td>
+        <td>${margemCellHtml({ custo: b.custoTotal, venda: b.vendaTotal, lucro: b.lucro, margemPct: b.margemPct }, db.settings)}</td>
+        <td>${statusBadge}</td>
+        <td>${formatDateBR(b.createdAt)}</td>
+        <td>
+          <div class="row-actions">
+            ${b.status !== "convertido_pedido" ? `<button class="icon-btn" data-conv-orc="${b.id}" title="Converter em pedido" type="button"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>` : ""}
+            <button class="icon-btn danger" data-del-orc="${b.id}" title="Excluir" type="button"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+  el.innerHTML = dataTable(["Cliente", "Produto", "Qtd.", "Valor", "Lucro / margem", "Status", "Data", ""], [rows]);
+  document.querySelectorAll("[data-conv-orc]").forEach(btn =>
+    btn.addEventListener("click", () => converterOrcamentoEmPedido(btn.getAttribute("data-conv-orc"))));
+  document.querySelectorAll("[data-del-orc]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-del-orc");
+      confirmModal("Excluir orçamento", "Tem certeza que deseja excluir este orçamento do histórico?", () => {
+        db.budgets = db.budgets.filter(b => b.id !== id);
+        Store.persist();
+        Toast.show("Orçamento excluído.");
+        renderOrcHistorico();
+      }, "Excluir");
+    }));
+}
+
+function converterOrcamentoEmPedido(budgetId) {
+  const db = Store.get();
+  const budget = db.budgets.find(b => b.id === budgetId);
+  if (!budget || budget.status === "convertido_pedido") return;
+  const produto = getProductById(budget.produtoId);
+  const material = produto ? (produto.materiais || []).find(m => m.id === budget.materialId) : null;
+  const pedido = {
+    id: uid("ped"),
+    orcamentoId: budget.id,
+    clienteId: budget.clienteId,
+    clienteNomeLivre: budget.clienteNomeLivre,
+    produtoNome: budget.produtoNome,
+    materialNome: budget.materialNome,
+    fornecedorId: material ? material.fornecedorId : null,
+    custo: budget.custoTotal,
+    valor: budget.vendaTotal,
+    kmCliente: budget.kmCliente || null,
+    custoLogisticaVariavel: budget.custoLogisticaVariavel || null,
+    statusOp: "pedido_confirmado",
+    statusFin: "nao_pago",
+    status: "pedido_confirmado", // compatibilidade legada
+    createdAt: todayISO(),
+    dataConclusao: null,
+    financeGerado: false
+  };
+  db.orders.push(pedido);
+  budget.status = "convertido_pedido";
+  budget.pedidoId = pedido.id;
+  Store.persist();
+  Toast.show("Orçamento convertido em pedido — acompanhe em Pedidos.");
+  renderOrcHistorico();
+  refreshSidebarBadges();
+}
+
+function atualizarPreviaOrcamento() {
+  // Atualizar label do KM em tempo real
+  const kmEl = document.getElementById("orcKmCliente");
+  const kmCalcEl = document.getElementById("orcKmClienteCalc");
+  if (kmEl && kmCalcEl) {
+    const km = parseFloat(kmEl.value);
+    if (!isNaN(km) && km > 0) {
+      const db = Store.get();
+      const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+      kmCalcEl.textContent = `→ ${km} km × ${formatBRL(custoPorKm)}/km = ${formatBRL(km * custoPorKm)}`;
+    } else {
+      kmCalcEl.textContent = "";
+    }
+  }
+
+  const produtoId = document.getElementById("orcProduto").value;
+  if (!produtoId) { renderOrcAdminPanel(null); return; }
+  const calc = calcularOrcamentoAtual();
+  renderOrcAdminPanel(calc);
+}
+
+function initOrcamentosPage() {
+  popularSelectProdutos();
+  refreshOrcamentoClienteOptions();
+  document.getElementById("orcProduto").value = "";
+  document.getElementById("orcSelecaoPanel").style.display = "none";
+  document.getElementById("orcItemSelecionado").innerHTML = `Selecione um produto no catálogo ao lado.`;
+  orcCategoriaAtual = "todas";
+  renderOrcCategoriaChips();
+  renderOrcCatalogoGrid();
+  renderOrcAdminPanel(null);
+  document.getElementById("orcMensagemPanel").style.display = "none";
+  document.getElementById("orcMensagemPanel").innerHTML = "";
+  renderOrcHistorico();
+
+  const clienteSel = document.getElementById("orcClienteSelect");
+  const avulsoWrap = document.getElementById("orcClienteAvulsoWrapper");
+  const syncAvulso = () => { avulsoWrap.style.display = clienteSel.value ? "none" : "flex"; };
+  clienteSel.onchange = syncAvulso;
+  syncAvulso();
+
+  document.getElementById("orcMaterial").onchange = () => { atualizarCamposQuantidade(); atualizarPreviaOrcamento(); };
+  document.getElementById("orcQtdSelect").onchange = atualizarPreviaOrcamento;
+  document.getElementById("orcQtdInput").oninput = atualizarPreviaOrcamento;
+  document.getElementById("orcLado").onchange = atualizarPreviaOrcamento;
+
+  document.getElementById("btnVerOrcamentos").onclick = () => {
+    document.getElementById("orcHistorico").scrollIntoView({ behavior: "smooth" });
+  };
+
+  document.getElementById("btnGerarOrcamento").onclick = () => {
+    const calc = calcularOrcamentoAtual();
+    const erroEl = document.getElementById("orcErro");
+    if (calc.erro) {
+      erroEl.innerHTML = `<div class="badge tone-red" style="margin-top:10px;">${escapeHtml(calc.erro)}</div>`;
+      renderOrcAdminPanel(calc);
+      return;
+    }
+    erroEl.innerHTML = "";
+    const db = Store.get();
+    const clienteId = clienteSel.value || null;
+    const clienteNomeLivre = clienteId ? "" : document.getElementById("orcClienteAvulso").value.trim();
+    if (!clienteId && !clienteNomeLivre) {
+      erroEl.innerHTML = `<div class="badge tone-red" style="margin-top:10px;">Selecione um cliente cadastrado ou informe o nome do cliente avulso.</div>`;
+      return;
+    }
+    const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+    const kmCliente = calc.kmCliente;
+    const custoLogisticaVariavel = (kmCliente != null && kmCliente > 0) ? kmCliente * custoPorKm : null;
+    const budget = {
+      id: uid("orc"),
+      clienteId,
+      clienteNomeLivre,
+      produtoId: calc.produto.id,
+      produtoNome: calc.produto.nome,
+      materialId: calc.material.id,
+      materialNome: calc.material.nome,
+      quantidade: calc.quantidade,
+      lado: calc.lado,
+      kmCliente: kmCliente,
+      custoLogisticaVariavel: custoLogisticaVariavel,
+      custoTotal: calc.custo,
+      vendaTotal: calc.venda,
+      lucro: calc.lucro,
+      margemPct: calc.margemPct,
+      frete: document.getElementById("orcFrete").value,
+      pagamento: document.getElementById("orcPagamento").value,
+      status: "gerado",
+      createdAt: todayISO()
+    };
+    budget.mensagem = gerarMensagemWhatsApp(budget);
+    db.budgets.push(budget);
+    Store.persist();
+    renderOrcAdminPanel(calc);
+    renderOrcMensagemPanel(budget);
+    renderOrcHistorico();
+    Toast.show("Orçamento gerado.");
+    refreshSidebarBadges();
+  };
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  Store.load();
+  aplicarTema(Store.get().settings.tema);
+  initOrcamentosPage();
+
+  document.getElementById("btnVoltarSistema").addEventListener("click", () => {
+    window.location.href = "sistema-grafica.html";
+  });
+});
+  </script>
+</body>
+</html>
