@@ -806,10 +806,13 @@ function renderDashboard() {
   // Produtos mais vendidos
   const porProduto = {};
   db.orders.forEach(o => {
-    if (!o.produtoNome) return;
-    porProduto[o.produtoNome] = porProduto[o.produtoNome] || { qtd: 0, valor: 0 };
-    porProduto[o.produtoNome].qtd += 1;
-    porProduto[o.produtoNome].valor += (o.valor || 0);
+    const itens = (o.itens && o.itens.length) ? o.itens : (o.produtoNome ? [{ produtoNome: o.produtoNome, venda: o.valor }] : []);
+    itens.forEach(item => {
+      if (!item.produtoNome) return;
+      porProduto[item.produtoNome] = porProduto[item.produtoNome] || { qtd: 0, valor: 0 };
+      porProduto[item.produtoNome].qtd += 1;
+      porProduto[item.produtoNome].valor += (item.venda || 0);
+    });
   });
   const topProdutos = Object.entries(porProduto).sort((a, b) => b[1].valor - a[1].valor).slice(0, 5);
   document.getElementById("dashTopProdutos").innerHTML = topProdutos.length
@@ -826,10 +829,13 @@ function renderDashboard() {
   // Desempenho de fornecedores
   const porFornecedor = {};
   db.orders.forEach(o => {
-    if (!o.fornecedorId) return;
-    porFornecedor[o.fornecedorId] = porFornecedor[o.fornecedorId] || { qtd: 0, custo: 0 };
-    porFornecedor[o.fornecedorId].qtd += 1;
-    porFornecedor[o.fornecedorId].custo += (o.custo || 0);
+    const itens = (o.itens && o.itens.length) ? o.itens : (o.fornecedorId ? [{ fornecedorId: o.fornecedorId, custo: o.custo }] : []);
+    itens.forEach(item => {
+      if (!item.fornecedorId) return;
+      porFornecedor[item.fornecedorId] = porFornecedor[item.fornecedorId] || { qtd: 0, custo: 0 };
+      porFornecedor[item.fornecedorId].qtd += 1;
+      porFornecedor[item.fornecedorId].custo += (item.custo || 0);
+    });
   });
   const topFornecedores = Object.entries(porFornecedor).sort((a, b) => b[1].custo - a[1].custo).slice(0, 5);
   document.getElementById("dashFornecedores").innerHTML = topFornecedores.length
@@ -2343,8 +2349,11 @@ function renderRelatorios() {
   // Produtos mais vendidos no período
   const porProduto = {};
   pedidosPeriodo.forEach(o => {
-    if (!o.produtoNome) return;
-    porProduto[o.produtoNome] = (porProduto[o.produtoNome] || 0) + (o.valor || 0);
+    const itens = (o.itens && o.itens.length) ? o.itens : (o.produtoNome ? [{ produtoNome: o.produtoNome, venda: o.valor }] : []);
+    itens.forEach(item => {
+      if (!item.produtoNome) return;
+      porProduto[item.produtoNome] = (porProduto[item.produtoNome] || 0) + (item.venda || 0);
+    });
   });
   const dataProdutos = Object.entries(porProduto).map(([label, valor]) => ({ label, valor })).sort((a, b) => b.valor - a.valor).slice(0, 6);
   document.getElementById("relProdutosChart").innerHTML = dataProdutos.length
@@ -2355,9 +2364,12 @@ function renderRelatorios() {
   const orcamentosPeriodo = db.budgets.filter(b => withinPeriod(b.createdAt, dias));
   const margemPorProduto = {};
   orcamentosPeriodo.forEach(b => {
-    if (b.margemPct === null || b.margemPct === undefined) return;
-    margemPorProduto[b.produtoNome] = margemPorProduto[b.produtoNome] || [];
-    margemPorProduto[b.produtoNome].push(b.margemPct);
+    const itens = (b.itens && b.itens.length) ? b.itens : [{ produtoNome: b.produtoNome, margemPct: b.margemPct }];
+    itens.forEach(item => {
+      if (item.margemPct === null || item.margemPct === undefined || !item.produtoNome) return;
+      margemPorProduto[item.produtoNome] = margemPorProduto[item.produtoNome] || [];
+      margemPorProduto[item.produtoNome].push(item.margemPct);
+    });
   });
   const dataMargem = Object.entries(margemPorProduto).map(([label, arr]) => ({ label, valor: arr.reduce((s, v) => s + v, 0) / arr.length }));
   document.getElementById("relMargemChart").innerHTML = dataMargem.length
@@ -2367,10 +2379,13 @@ function renderRelatorios() {
   // Desempenho por fornecedor (custo total em pedidos concluídos no período)
   const porFornecedor = {};
   pedidosPeriodo.forEach(o => {
-    if (!o.fornecedorId) return;
-    const f = getSupplierById(o.fornecedorId);
-    const nome = f ? f.nome : "Fornecedor removido";
-    porFornecedor[nome] = (porFornecedor[nome] || 0) + (o.custo || 0);
+    const itens = (o.itens && o.itens.length) ? o.itens : (o.fornecedorId ? [{ fornecedorId: o.fornecedorId, custo: o.custo }] : []);
+    itens.forEach(item => {
+      if (!item.fornecedorId) return;
+      const f = getSupplierById(item.fornecedorId);
+      const nome = f ? f.nome : "Fornecedor removido";
+      porFornecedor[nome] = (porFornecedor[nome] || 0) + (item.custo || 0);
+    });
   });
   const dataFornecedor = Object.entries(porFornecedor).map(([label, valor]) => ({ label, valor }));
   document.getElementById("relFornecedorChart").innerHTML = dataFornecedor.length
