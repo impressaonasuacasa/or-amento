@@ -264,6 +264,33 @@ const Store = (function () {
             db.logisticsRoutes.push({ id: "rota-futuraim", fornecedorId: "futuraim", origem: "Local do administrador", destino: "FuturaIM", distanciaKm: 7 });
           }
         }
+        // Migração (Fase 4 do PDV): orçamentos antigos eram sempre "um produto só".
+        // A partir de agora um orçamento pode ter várias linhas (budget.itens).
+        // Orçamentos já salvos no formato antigo ganham um itens[] de 1 posição,
+        // montado a partir dos campos legados — nada é aproximado, o fornecedor
+        // de cada item é resolvido consultando o próprio produto/material salvos.
+        // Os campos legados (produtoNome, materialNome, quantidade, custoTotal,
+        // vendaTotal, lucro, margemPct) continuam existindo na raiz do orçamento,
+        // agora representando o AGREGADO do ticket inteiro — então qualquer leitura
+        // antiga desses campos (dentro ou fora deste arquivo) continua funcionando.
+        if (Array.isArray(db.budgets)) {
+          db.budgets = db.budgets.map(b => {
+            if (Array.isArray(b.itens)) return b; // já está no formato novo
+            const produto = (db.products || []).find(p => p.id === b.produtoId);
+            const material = produto ? (produto.materiais || []).find(m => m.id === b.materialId) : null;
+            return {
+              ...b,
+              itens: [{
+                produtoId: b.produtoId, produtoNome: b.produtoNome,
+                materialId: b.materialId, materialNome: b.materialNome,
+                quantidade: b.quantidade, lado: b.lado,
+                fornecedorId: material ? material.fornecedorId : null,
+                custo: b.custoTotal, venda: b.vendaTotal,
+                lucro: b.lucro, margemPct: b.margemPct
+              }]
+            };
+          });
+        }
         return db;
       }
     } catch (e) {
