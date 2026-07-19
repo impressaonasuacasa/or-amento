@@ -532,9 +532,21 @@ function renderOrcAdminPanel() {
   `;
 }
 
-function custoLogisticoAdendoHtml(totais) {
+// Fase 7 — ponto único de leitura da taxa de logística variável (R$/km).
+// Hoje é sempre global (db.logisticsConfig.custoPorKm). Se um dia precisar virar
+// "por fornecedor", é só este helper que muda — os 3 lugares que hoje leem a
+// taxa (preview de KM, análise de custo real, geração do orçamento) não precisam
+// saber de onde ela veio. Vale notar: como um ticket pode ter itens de mais de
+// um fornecedor, "por fornecedor" exigiria decidir qual fornecedor manda na
+// logística variável do ticket — por isso não implementei agora, só deixei o
+// ponto de extensão pronto.
+function custoPorKmAtual() {
   const db = Store.get();
-  const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+  return (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+}
+
+function custoLogisticoAdendoHtml(totais) {
+  const custoPorKm = custoPorKmAtual();
   const logFixo = custoLogisticoFixoDoTicket();
 
   // Logística variável: KM fornecedor → cliente (continua sendo um valor só, do ticket inteiro)
@@ -721,8 +733,7 @@ function atualizarPreviaOrcamento() {
   if (kmEl && kmCalcEl) {
     const km = parseFloat(kmEl.value);
     if (!isNaN(km) && km > 0) {
-      const db = Store.get();
-      const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+      const custoPorKm = custoPorKmAtual();
       kmCalcEl.textContent = `→ ${km} km × ${formatBRL(custoPorKm)}/km = ${formatBRL(km * custoPorKm)}`;
     } else {
       kmCalcEl.textContent = "";
@@ -890,7 +901,7 @@ function initOrcamentosPage() {
     const db = Store.get();
     const clienteId = clienteSel.value || null;
     const clienteNomeLivre = clienteId ? "" : avulsoInput.value.trim();
-    const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+    const custoPorKm = custoPorKmAtual();
     const kmClienteEl = document.getElementById("orcKmCliente");
     const kmCliente = kmClienteEl && kmClienteEl.value !== "" ? parseFloat(kmClienteEl.value) : null;
     const custoLogisticaVariavel = (kmCliente != null && !isNaN(kmCliente) && kmCliente > 0) ? kmCliente * custoPorKm : null;
