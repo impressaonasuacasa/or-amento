@@ -44,6 +44,24 @@
   /* Fase 2 — validação inline de campo obrigatório */
   .field-error{ font-size:11.5px; font-weight:600; color:var(--color-red-600); margin-top:-6px; }
   .field.field--invalid input, .field.field--invalid select{ border-color:var(--color-red-600); }
+
+  /* Fase 4 — stepper de quantidade */
+  .stepper{ display:flex; align-items:stretch; border:1px solid var(--color-border); border-radius:var(--radius-sm); overflow:hidden; width:fit-content; background:var(--color-white); }
+  .stepper__btn{ width:34px; background:none; border:none; color:var(--color-brand-600); font-size:16px; font-weight:700; line-height:1; cursor:pointer; }
+  .stepper__btn:hover:not(:disabled){ background:var(--color-brand-50); }
+  .stepper__btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .stepper__value, .stepper__input{ min-width:96px; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:600; font-size:13px; color:var(--color-text-900); border-left:1px solid var(--color-border); border-right:1px solid var(--color-border); text-align:center; }
+  .stepper__input{ border-top:none; border-bottom:none; -moz-appearance:textfield; }
+  .stepper__input::-webkit-outer-spin-button, .stepper__input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .stepper--sm .stepper__btn{ width:24px; font-size:13px; }
+  .stepper--sm .stepper__value{ min-width:44px; font-size:11.5px; padding:0 4px; }
+
+  /* Fase 4 — linhas do ticket com múltiplos itens */
+  .pdv-ticket-item{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--color-border-soft); }
+  .pdv-ticket-item:last-child{ border-bottom:none; }
+  .pdv-ticket-item__info{ flex:1; min-width:0; }
+  .pdv-ticket-item__name{ font-size:13px; font-weight:600; color:var(--color-text-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pdv-ticket-item__subtotal{ font-size:13px; font-weight:700; white-space:nowrap; min-width:76px; text-align:right; }
 </style>
 </head>
 <body>
@@ -78,13 +96,20 @@
         <div class="pdv-layout">
           <!-- Coluna esquerda: catálogo -->
           <div class="stack">
-            <div class="card card-pad">
+            <div class="card card-pad" style="display:flex; flex-direction:column; gap:12px;">
+              <div class="search-field">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" id="orcBuscaProduto" placeholder="Buscar produto por nome…">
+              </div>
               <div class="toolbar__filters" id="orcCategoriaChips" style="margin-bottom:0;"></div>
             </div>
             <div id="orcCatalogoGrid" class="pdv-catalog-grid"></div>
 
             <div class="card panel" id="orcSelecaoPanel" style="display:none;">
-              <div class="panel__header"><h3>Detalhes do item</h3></div>
+              <div class="panel__header">
+                <h3>Detalhes do item</h3>
+                <span class="badge tone-blue" id="orcSelecaoNomeBadge"></span>
+              </div>
               <div class="field">
                 <label>Material</label>
                 <select id="orcMaterial"></select>
@@ -92,8 +117,13 @@
               <div class="field-row" id="orcQtdLadoRow">
                 <div class="field" id="orcQtdWrapper">
                   <label id="orcQtdLabel">Quantidade</label>
+                  <div class="stepper" id="orcQtdStepper">
+                    <button type="button" class="stepper__btn" id="orcQtdMinus" aria-label="Diminuir quantidade">−</button>
+                    <span class="stepper__value" id="orcQtdDisplay" style="display:none;">—</span>
+                    <input type="number" id="orcQtdInput" class="stepper__input" style="display:none;" placeholder="Ex: 100">
+                    <button type="button" class="stepper__btn" id="orcQtdPlus" aria-label="Aumentar quantidade">+</button>
+                  </div>
                   <select id="orcQtdSelect" style="display:none;"></select>
-                  <input type="number" id="orcQtdInput" style="display:none;" placeholder="Ex: 100">
                 </div>
                 <div class="field" id="orcLadoWrapper">
                   <label>Impressão</label>
@@ -103,6 +133,10 @@
                   </select>
                 </div>
               </div>
+              <button class="btn btn-secondary" id="btnAdicionarItem" type="button" style="margin-top:4px;">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Adicionar ao ticket
+              </button>
             </div>
           </div>
 
@@ -114,7 +148,7 @@
                 <span class="badge tone-gray">Painel interno</span>
               </div>
 
-              <div id="orcItemSelecionado" class="text-muted">Selecione um produto no catálogo ao lado.</div>
+              <div id="orcTicketItens" class="text-muted">Nenhum item adicionado ainda. Escolha um produto no catálogo ao lado.</div>
 
               <div class="field">
                 <label>Cliente</label>
@@ -207,6 +241,11 @@ function refreshOrcamentoClienteOptions() {
 // Fonte da verdade da seleção de produto no PDV — substitui o antigo <select id="orcProduto"> oculto.
 let produtoSelecionadoId = null;
 
+// Ticket do PDV: acumula quantas linhas o operador adicionar (Fase 4).
+// Cada item já traz custo/venda/lucro/margemPct prontos — calculados por
+// calcularOrcamentoAtual() no momento em que a linha foi adicionada, nunca recalculados "de olho".
+let ticketItens = [];
+
 let orcCategoriaAtual = "todas";
 const PRODUTO_ICONS = {
   "Cartões": `<path d="M3 6h18v12H3Z"/><path d="M7 15h4M7 11.5h.01"/>`,
@@ -234,11 +273,15 @@ function renderOrcCategoriaChips() {
 }
 
 function renderOrcCatalogoGrid() {
-  const produtos = Store.get().products.filter(p => orcCategoriaAtual === "todas" || (p.categoria || "Outros") === orcCategoriaAtual);
+  const termo = (document.getElementById("orcBuscaProduto").value || "").trim().toLowerCase();
+  const produtos = Store.get().products.filter(p =>
+    (orcCategoriaAtual === "todas" || (p.categoria || "Outros") === orcCategoriaAtual) &&
+    (!termo || p.nome.toLowerCase().includes(termo))
+  );
   const grid = document.getElementById("orcCatalogoGrid");
   const selecionadoId = produtoSelecionadoId;
   if (!produtos.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;">${emptyStateHtml("Nenhum produto nessa categoria", "Cadastre produtos na guia Produtos para vê-los aqui.")}</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;">${emptyStateHtml("Nenhum produto encontrado", termo ? "Tente outro termo de busca." : "Cadastre produtos na guia Produtos para vê-los aqui.")}</div>`;
     return;
   }
   grid.innerHTML = produtos.map(p => `
@@ -259,8 +302,8 @@ function selecionarProdutoPDV(produtoId) {
   atualizarCamposQuantidade();
   document.getElementById("orcSelecaoPanel").style.display = "";
   const produto = getProductById(produtoId);
-  document.getElementById("orcItemSelecionado").innerHTML = `<span class="badge tone-blue">Selecionado</span> <strong style="color:var(--color-text-900); margin-left:6px;">${escapeHtml(produto.nome)}</strong>`;
-  renderOrcAdminPanel(null);
+  document.getElementById("orcSelecaoNomeBadge").textContent = produto.nome;
+  atualizarPreviaOrcamento();
   document.getElementById("orcMensagemPanel").style.display = "none";
 }
 
@@ -282,13 +325,13 @@ const MODOS_PRECO = {
   tiers: {
     configurarCampos(produto, material, els) {
       els.qtdLabel.textContent = "Quantidade";
-      els.qtdSelect.style.display = "";
+      els.qtdDisplay.style.display = "";
       els.qtdInput.style.display = "none";
-      els.qtdSelect.innerHTML = (material.tiers || []).map(t => `<option value="${t.qtd}">${formatNum(t.qtd)} unidades</option>`).join("");
+      els.qtdSelect.innerHTML = (material.tiers || []).slice().sort((a, b) => a.qtd - b.qtd)
+        .map(t => `<option value="${t.qtd}">${formatNum(t.qtd)} unidades</option>`).join("");
       els.ladoWrapper.style.display = "";
     },
-    calcular(material, lado, els) {
-      const quantidade = parseFloat(els.qtdSelect.value);
+    calcular(material, lado, quantidade) {
       const tier = (material.tiers || []).find(t => t.qtd === quantidade);
       if (!tier) return { erro: "Quantidade não encontrada na tabela deste material." };
       const custo = lado === "fv" ? tier.custoFV : tier.custoFrente;
@@ -301,14 +344,13 @@ const MODOS_PRECO = {
   faixas: {
     configurarCampos(produto, material, els) {
       els.qtdLabel.textContent = `Quantidade (mínimo ${produto.qtdMinima || 1})`;
-      els.qtdSelect.style.display = "none";
+      els.qtdDisplay.style.display = "none";
       els.qtdInput.style.display = "";
       els.qtdInput.min = produto.qtdMinima || 1;
       els.qtdInput.value = els.qtdInput.value || (produto.qtdMinima || 1);
       els.ladoWrapper.style.display = "none";
     },
-    calcular(material, lado, els, produto) {
-      const quantidade = parseInt(els.qtdInput.value, 10);
+    calcular(material, lado, quantidade, produto) {
       if (!quantidade || quantidade < (produto.qtdMinima || 1)) return { erro: `Informe uma quantidade válida (mínimo ${produto.qtdMinima || 1}).` };
       const faixa = buscarFaixa(material.faixas, quantidade);
       if (!faixa) return { erro: "Não existe faixa de preço cadastrada para essa quantidade." };
@@ -320,14 +362,13 @@ const MODOS_PRECO = {
   padrao: {
     configurarCampos(produto, material, els) {
       els.qtdLabel.textContent = "Quantidade";
-      els.qtdSelect.style.display = "none";
+      els.qtdDisplay.style.display = "none";
       els.qtdInput.style.display = "";
       els.qtdInput.min = 1;
       els.qtdInput.value = els.qtdInput.value || 1;
       els.ladoWrapper.style.display = "none";
     },
-    calcular(material, lado, els) {
-      const quantidade = parseInt(els.qtdInput.value, 10);
+    calcular(material, lado, quantidade) {
       if (!quantidade || quantidade < 1) return { erro: "Informe uma quantidade válida." };
       if (material.custo === null || material.custo === undefined) return { erro: "Custo não cadastrado para este material." };
       if (material.venda === null || material.venda === undefined) return { erro: "Preço de venda não cadastrado para este material." };
@@ -342,17 +383,76 @@ function modoPrecoDoProduto(produto) {
   return MODOS_PRECO[produto.modoPreco] || MODOS_PRECO.padrao;
 }
 
+// Quantidade "oficial" do painel de seleção — único lugar que lê o DOM pra
+// resolver o valor atual, independente do modo (select oculto ou input visível).
+function quantidadeDoPainelSelecao(produto) {
+  if (produto.modoPreco === "tiers") {
+    const v = parseFloat(document.getElementById("orcQtdSelect").value);
+    return isNaN(v) ? null : v;
+  }
+  const v = parseInt(document.getElementById("orcQtdInput").value, 10);
+  return isNaN(v) ? null : v;
+}
+
 function atualizarCamposQuantidade() {
   const produto = getProductById(produtoSelecionadoId);
   const material = produto ? (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value) : null;
   const qtdSelect = document.getElementById("orcQtdSelect");
   const qtdInput = document.getElementById("orcQtdInput");
+  const qtdDisplay = document.getElementById("orcQtdDisplay");
   const ladoWrapper = document.getElementById("orcLadoWrapper");
   const qtdLabel = document.getElementById("orcQtdLabel");
 
-  if (!produto || !material) { qtdSelect.style.display = "none"; qtdInput.style.display = "none"; return; }
+  if (!produto || !material) { qtdSelect.style.display = "none"; qtdInput.style.display = "none"; qtdDisplay.style.display = "none"; return; }
 
-  modoPrecoDoProduto(produto).configurarCampos(produto, material, { qtdSelect, qtdInput, ladoWrapper, qtdLabel });
+  modoPrecoDoProduto(produto).configurarCampos(produto, material, { qtdSelect, qtdInput, qtdDisplay, ladoWrapper, qtdLabel });
+  atualizarStepperVisual();
+}
+
+// Fase 4 — stepper: os botões -/+ manipulam o <select>/<input> reais (que
+// continuam sendo a fonte de dados lida por quantidadeDoPainelSelecao) e
+// disparam o evento de mudança, então nenhum listener existente precisa saber
+// que o clique veio de um botão em vez de uma digitação direta.
+function ajustarQuantidadePainel(direcao) {
+  const produto = getProductById(produtoSelecionadoId);
+  const material = produto ? (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value) : null;
+  if (!produto || !material) return;
+
+  if (produto.modoPreco === "tiers") {
+    const qtdSelect = document.getElementById("orcQtdSelect");
+    const tiers = (material.tiers || []).slice().sort((a, b) => a.qtd - b.qtd);
+    const idxAtual = tiers.findIndex(t => String(t.qtd) === qtdSelect.value);
+    const proximoIdx = Math.min(Math.max(idxAtual + direcao, 0), tiers.length - 1);
+    if (tiers[proximoIdx]) qtdSelect.value = tiers[proximoIdx].qtd;
+  } else {
+    const qtdInput = document.getElementById("orcQtdInput");
+    const min = produto.modoPreco === "faixas" ? (produto.qtdMinima || 1) : 1;
+    const atual = parseInt(qtdInput.value, 10) || min;
+    qtdInput.value = Math.max(min, atual + direcao);
+  }
+  atualizarStepperVisual();
+  atualizarPreviaOrcamento();
+}
+
+function atualizarStepperVisual() {
+  const produto = getProductById(produtoSelecionadoId);
+  const material = produto ? (produto.materiais || []).find(m => m.id === document.getElementById("orcMaterial").value) : null;
+  const qtdDisplay = document.getElementById("orcQtdDisplay");
+  const qtdMinus = document.getElementById("orcQtdMinus");
+  const qtdPlus = document.getElementById("orcQtdPlus");
+  if (!produto || !material) { qtdMinus.disabled = true; qtdPlus.disabled = true; return; }
+
+  if (produto.modoPreco === "tiers") {
+    const qtdSelect = document.getElementById("orcQtdSelect");
+    const tiers = (material.tiers || []).slice().sort((a, b) => a.qtd - b.qtd);
+    const idxAtual = tiers.findIndex(t => String(t.qtd) === qtdSelect.value);
+    qtdDisplay.textContent = tiers[idxAtual] ? `${formatNum(tiers[idxAtual].qtd)} unidades` : "—";
+    qtdMinus.disabled = idxAtual <= 0;
+    qtdPlus.disabled = idxAtual === -1 || idxAtual >= tiers.length - 1;
+  } else {
+    qtdMinus.disabled = false;
+    qtdPlus.disabled = false;
+  }
 }
 
 function calcularOrcamentoAtual() {
@@ -362,75 +462,110 @@ function calcularOrcamentoAtual() {
   if (!material) return { erro: "Este produto ainda não tem nenhum material cadastrado." };
 
   const lado = document.getElementById("orcLado").value;
-  const els = { qtdSelect: document.getElementById("orcQtdSelect"), qtdInput: document.getElementById("orcQtdInput") };
+  const quantidade = quantidadeDoPainelSelecao(produto);
 
-  const resultado = modoPrecoDoProduto(produto).calcular(material, lado, els, produto);
+  const resultado = modoPrecoDoProduto(produto).calcular(material, lado, quantidade, produto);
   if (resultado.erro) return { erro: resultado.erro };
-  const { quantidade, custoTotal, vendaTotal } = resultado;
 
-  const margem = calcularMargem(custoTotal, vendaTotal);
+  const margem = calcularMargem(resultado.custoTotal, resultado.vendaTotal);
 
   // Logística variável: KM do fornecedor até o cliente
   const kmClienteEl = document.getElementById("orcKmCliente");
   const kmCliente = kmClienteEl && kmClienteEl.value !== "" ? parseFloat(kmClienteEl.value) : null;
 
-  return { produto, material, quantidade, lado, ...margem, kmCliente, erro: null };
+  return { produto, material, quantidade: resultado.quantidade, lado, ...margem, kmCliente, erro: null };
 }
 
-function renderOrcAdminPanel(calc) {
+// Recalcula uma linha já existente no ticket com uma nova quantidade — mesma
+// lógica de preço de calcularOrcamentoAtual, só que sem depender do painel de
+// seleção (usado pelo stepper de cada linha do ticket, Fase 4).
+function recalcularLinhaTicket(produto, material, quantidade, lado) {
+  const resultado = modoPrecoDoProduto(produto).calcular(material, lado, quantidade, produto);
+  if (resultado.erro) return { erro: resultado.erro };
+  const margem = calcularMargem(resultado.custoTotal, resultado.vendaTotal);
+  return { quantidade: resultado.quantidade, lado, ...margem, erro: null };
+}
+
+// Soma custo/venda de todas as linhas do ticket e devolve lucro/margem
+// calculados pela mesma calcularMargem() de sempre — nunca "na mão".
+function calcularTotaisTicket() {
+  if (!ticketItens.length) return { custo: null, venda: null, lucro: null, margemPct: null };
+  const custoTotal = ticketItens.reduce((soma, item) => soma + item.custo, 0);
+  const vendaTotal = ticketItens.reduce((soma, item) => soma + item.venda, 0);
+  return calcularMargem(custoTotal, vendaTotal);
+}
+
+// Logística fixa: soma o custo de cada FORNECEDOR DISTINTO presente no ticket
+// (uma viagem por fornecedor visitado, não por item — dois itens do mesmo
+// fornecedor não duplicam o custo de logística fixa). Ver nota na resposta.
+function custoLogisticoFixoDoTicket() {
+  const fornecedoresUnicos = [...new Set(ticketItens.map(item => item.fornecedorId).filter(Boolean))];
+  if (!fornecedoresUnicos.length) return { total: null, algumNaoCadastrado: false };
+  let total = 0;
+  let algumNaoCadastrado = false;
+  fornecedoresUnicos.forEach(fid => {
+    const c = custoLogisticoDoFornecedor(fid);
+    if (c === null) algumNaoCadastrado = true; else total += c;
+  });
+  return { total: algumNaoCadastrado && total === 0 ? null : total, algumNaoCadastrado };
+}
+
+function renderOrcAdminPanel() {
   const el = document.getElementById("orcAdminPanel");
-  if (!calc || calc.erro) {
-    el.innerHTML = `<div class="chart-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/></svg><span>${escapeHtml(calc && calc.erro ? calc.erro : "Selecione um produto para ver o custo e a margem aqui.")}</span></div>`;
+  if (!ticketItens.length) {
+    el.innerHTML = `<div class="chart-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.3 1.1-2 2.5-2s2.5.7 2.5 1.8c0 2.6-5 1.4-5 4 0 1.1 1.1 1.9 2.5 1.9s2.5-.7 2.5-2"/></svg><span>Adicione itens ao ticket para ver custo, lucro e margem aqui.</span></div>`;
     return;
   }
-  const classe = classificarMargem(calc.margemPct, Store.get().settings);
-  const fornecedor = getSupplierById(calc.material.fornecedorId);
+  const totais = calcularTotaisTicket();
+  const classe = classificarMargem(totais.margemPct, Store.get().settings);
+  const quantidadeTotal = ticketItens.reduce((soma, item) => soma + (item.quantidade || 0), 0);
   el.innerHTML = `
     <div class="grid-2" style="gap:14px;">
-      <div><div class="text-muted">Fornecedor</div><div style="font-weight:600;">${fornecedor ? escapeHtml(fornecedor.nome) : "Não vinculado"}</div></div>
-      <div><div class="text-muted">Quantidade</div><div style="font-weight:600;">${formatNum(calc.quantidade)} un.</div></div>
-      <div><div class="text-muted">Custo total</div><div class="mono" style="font-weight:600;">${formatBRL(calc.custo)}</div></div>
-      <div><div class="text-muted">Valor de venda</div><div class="mono" style="font-weight:600;">${formatBRL(calc.venda)}</div></div>
-      <div><div class="text-muted">Lucro estimado</div><div class="mono" style="font-weight:700; color:var(--color-green-700);">${formatBRL(calc.lucro)}</div></div>
-      <div><div class="text-muted">Margem</div><span class="badge tone-${classe.tone}">${calc.margemPct.toFixed(1)}% · ${classe.label}</span></div>
+      <div><div class="text-muted">Itens no ticket</div><div style="font-weight:600;">${ticketItens.length}</div></div>
+      <div><div class="text-muted">Quantidade total</div><div style="font-weight:600;">${formatNum(quantidadeTotal)} un.</div></div>
+      <div><div class="text-muted">Custo total</div><div class="mono" style="font-weight:600;">${formatBRL(totais.custo)}</div></div>
+      <div><div class="text-muted">Valor de venda</div><div class="mono" style="font-weight:600;">${formatBRL(totais.venda)}</div></div>
+      <div><div class="text-muted">Lucro estimado</div><div class="mono" style="font-weight:700; color:var(--color-green-700);">${formatBRL(totais.lucro)}</div></div>
+      <div><div class="text-muted">Margem</div><span class="badge tone-${classe.tone}">${totais.margemPct.toFixed(1)}% · ${classe.label}</span></div>
     </div>
-    ${custoLogisticoAdendoHtml(calc)}
+    ${custoLogisticoAdendoHtml(totais)}
   `;
 }
 
-function custoLogisticoAdendoHtml(calc) {
-  const custoLogisticoFixo = custoLogisticoDoFornecedor(calc.material.fornecedorId);
+function custoLogisticoAdendoHtml(totais) {
   const db = Store.get();
   const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
+  const logFixo = custoLogisticoFixoDoTicket();
 
-  // Logística variável: KM fornecedor → cliente
-  const kmCliente = (calc.kmCliente != null && !isNaN(calc.kmCliente) && calc.kmCliente > 0) ? calc.kmCliente : null;
-  const custoLogisticoVariavel = kmCliente !== null ? kmCliente * custoPorKm : null;
+  // Logística variável: KM fornecedor → cliente (continua sendo um valor só, do ticket inteiro)
+  const kmClienteEl = document.getElementById("orcKmCliente");
+  const kmCliente = kmClienteEl && kmClienteEl.value !== "" ? parseFloat(kmClienteEl.value) : null;
+  const custoLogisticoVariavel = (kmCliente != null && !isNaN(kmCliente) && kmCliente > 0) ? kmCliente * custoPorKm : null;
 
-  if (custoLogisticoFixo === null && custoLogisticoVariavel === null) {
-    return `<div class="text-muted" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--color-border-soft);">Custo de logística não cadastrado para este fornecedor — veja a guia <strong>Custos → Custos de Logística</strong>. Para logística variável, preencha o campo "KM até o cliente" acima.</div>`;
+  if (logFixo.total === null && custoLogisticoVariavel === null && !logFixo.algumNaoCadastrado) {
+    return `<div class="text-muted" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--color-border-soft);">Custo de logística não cadastrado para os fornecedores deste ticket — veja a guia <strong>Custos → Custos de Logística</strong>. Para logística variável, preencha o campo "KM até o cliente" acima.</div>`;
   }
 
-  const logFixoTexto = custoLogisticoFixo !== null
-    ? formatBRL(custoLogisticoFixo)
-    : "Não cadastrado";
+  const logFixoTexto = logFixo.total !== null
+    ? formatBRL(logFixo.total) + (logFixo.algumNaoCadastrado ? " (parcial)" : "")
+    : (logFixo.algumNaoCadastrado ? "Não cadastrado" : "—");
   const logVarTexto = custoLogisticoVariavel !== null
     ? `${kmCliente} km × ${formatBRL(custoPorKm)}/km = ${formatBRL(custoLogisticoVariavel)}`
     : "KM não informado";
 
-  const totalLogistica = (custoLogisticoFixo || 0) + (custoLogisticoVariavel || 0);
-  const custoTotalReal = (calc.custo || 0) + totalLogistica;
-  const lucroLiquidoReal = (calc.venda || 0) - custoTotalReal;
-  const margemReal = calc.venda > 0 ? (lucroLiquidoReal / calc.venda) * 100 : null;
+  const totalLogistica = (logFixo.total || 0) + (custoLogisticoVariavel || 0);
+  const custoTotalReal = (totais.custo || 0) + totalLogistica;
+  const lucroLiquidoReal = (totais.venda || 0) - custoTotalReal;
+  const margemReal = totais.venda > 0 ? (lucroLiquidoReal / totais.venda) * 100 : null;
   const classeReal = classificarMargem(margemReal, db.settings);
 
   return `
     <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--color-border-soft);">
       <div class="text-muted" style="font-weight:600; margin-bottom:8px;">Análise de custo real (com logística)</div>
       <div class="grid-2" style="gap:14px;">
-        <div><div class="text-muted">Preço de venda</div><div class="mono" style="font-weight:600;">${formatBRL(calc.venda)}</div></div>
-        <div><div class="text-muted">Custo fornecedor</div><div class="mono" style="font-weight:600;">${formatBRL(calc.custo)}</div></div>
-        <div><div class="text-muted">Logística fixa (admin → fornecedor)</div><div class="mono" style="font-weight:600;">${logFixoTexto}</div></div>
+        <div><div class="text-muted">Preço de venda</div><div class="mono" style="font-weight:600;">${formatBRL(totais.venda)}</div></div>
+        <div><div class="text-muted">Custo fornecedores</div><div class="mono" style="font-weight:600;">${formatBRL(totais.custo)}</div></div>
+        <div><div class="text-muted">Logística fixa (admin → fornecedor(es))</div><div class="mono" style="font-weight:600;">${logFixoTexto}</div></div>
         <div><div class="text-muted">Logística variável (fornecedor → cliente)</div><div class="mono" style="font-weight:600;">${logVarTexto}</div></div>
         <div><div class="text-muted">Custo total</div><div class="mono" style="font-weight:700;">${formatBRL(custoTotalReal)}</div></div>
         <div><div class="text-muted">Lucro líquido</div><div class="mono" style="font-weight:700; color:var(--color-green-700);">${formatBRL(lucroLiquidoReal)}</div></div>
@@ -441,12 +576,18 @@ function custoLogisticoAdendoHtml(calc) {
 }
 
 function gerarMensagemWhatsApp(budget) {
+  const itens = budget.itens && budget.itens.length ? budget.itens : [{
+    produtoNome: budget.produtoNome, materialNome: budget.materialNome, quantidade: budget.quantidade
+  }];
+  const blocosItens = itens.map(item =>
+    `🖨️ *${item.produtoNome}*${item.materialNome ? " — " + item.materialNome : ""}\nQuantidade: ${formatNum(item.quantidade)} unidades`
+  );
   const linhas = [
     `Olá! Segue o orçamento solicitado:`,
     ``,
-    `🖨️ *${budget.produtoNome}*${budget.materialNome ? " — " + budget.materialNome : ""}`,
-    `Quantidade: ${formatNum(budget.quantidade)} unidades`,
-    `Valor: *${formatBRL(budget.vendaTotal)}*`,
+    ...blocosItens.join("\n\n").split("\n"),
+    ``,
+    `Valor total: *${formatBRL(budget.vendaTotal)}*`,
     ``,
     `🚚 ${budget.frete}`,
     `💳 ${budget.pagamento}`,
@@ -493,10 +634,14 @@ function renderOrcHistorico() {
     const statusBadge = b.status === "convertido_pedido"
       ? `<span class="badge tone-green">Virou pedido</span>`
       : `<span class="badge tone-blue">Gerado</span>`;
+    const itens = b.itens || [];
+    const produtoCell = itens.length > 1
+      ? `${escapeHtml(itens[0].produtoNome)} <span class="badge tone-gray" style="margin-left:4px;">+${itens.length - 1}</span>`
+      : `${escapeHtml(b.produtoNome)}${b.materialNome ? `<div class="text-muted">${escapeHtml(b.materialNome)}</div>` : ""}`;
     return `
       <tr>
         <td><strong style="color:var(--color-text-900);">${escapeHtml(nome)}</strong></td>
-        <td>${escapeHtml(b.produtoNome)}${b.materialNome ? `<div class="text-muted">${escapeHtml(b.materialNome)}</div>` : ""}</td>
+        <td>${produtoCell}</td>
         <td class="num">${formatNum(b.quantidade)}</td>
         <td class="num">${formatBRL(b.vendaTotal)}</td>
         <td>${margemCellHtml({ custo: b.custoTotal, venda: b.vendaTotal, lucro: b.lucro, margemPct: b.margemPct }, db.settings)}</td>
@@ -526,20 +671,24 @@ function renderOrcHistorico() {
     }));
 }
 
+// Fase 5 (decisão confirmada): um orçamento com múltiplas linhas vira UM pedido
+// só, com itens[] dentro — não um pedido por linha.
 function converterOrcamentoEmPedido(budgetId) {
   const db = Store.get();
   const budget = db.budgets.find(b => b.id === budgetId);
   if (!budget || budget.status === "convertido_pedido") return;
-  const produto = getProductById(budget.produtoId);
-  const material = produto ? (produto.materiais || []).find(m => m.id === budget.materialId) : null;
+  const itens = budget.itens || [];
   const pedido = {
     id: uid("ped"),
     orcamentoId: budget.id,
     clienteId: budget.clienteId,
     clienteNomeLivre: budget.clienteNomeLivre,
+    itens: itens.map(item => ({ ...item })),
+    // Campos legados/agregados — mantidos pra compatibilidade com Financeiro/Pedidos
+    // e qualquer leitura fora deste arquivo que espere produto/material/custo/valor únicos.
     produtoNome: budget.produtoNome,
     materialNome: budget.materialNome,
-    fornecedorId: material ? material.fornecedorId : null,
+    fornecedorId: itens.length === 1 ? itens[0].fornecedorId : null,
     custo: budget.custoTotal,
     valor: budget.vendaTotal,
     kmCliente: budget.kmCliente || null,
@@ -580,13 +729,80 @@ function atualizarPreviaOrcamento() {
     }
   }
 
-  if (!produtoSelecionadoId) { renderOrcAdminPanel(null); renderOrcErroOperacional(""); return; }
+  // O painel de margem sempre reflete o TOTAL do ticket já confirmado (Fase 4) —
+  // aqui só recalculamos pra refletir mudança de KM, por exemplo.
+  renderOrcAdminPanel();
+
+  if (!produtoSelecionadoId) { renderOrcErroOperacional(""); return; }
   const calc = calcularOrcamentoAtual();
-  // A análise de margem (calc completo) fica dentro do accordion recolhido —
-  // mas um erro que bloqueia o orçamento (produto/material/quantidade inválidos,
-  // custo não cadastrado) precisa aparecer fora dele, sem o operador precisar abrir.
+  // Erro que bloqueia ADICIONAR o item atual ao ticket (produto/material/quantidade
+  // inválidos, custo não cadastrado) — sempre visível, fora do accordion de margem.
   renderOrcErroOperacional(calc.erro);
-  renderOrcAdminPanel(calc);
+}
+
+function renderOrcTicketItens() {
+  const el = document.getElementById("orcTicketItens");
+  if (!ticketItens.length) {
+    el.innerHTML = `Nenhum item adicionado ainda. Escolha um produto no catálogo ao lado.`;
+    el.className = "text-muted";
+    return;
+  }
+  el.className = "";
+  el.innerHTML = ticketItens.map((item, idx) => `
+    <div class="pdv-ticket-item">
+      <div class="pdv-ticket-item__info">
+        <div class="pdv-ticket-item__name">${escapeHtml(item.produtoNome)}</div>
+        <div class="text-muted" style="font-size:11.5px;">${escapeHtml(item.materialNome)} · ${item.lado === "fv" ? "Frente e verso" : "Frente"}</div>
+      </div>
+      <div class="stepper stepper--sm">
+        <button type="button" class="stepper__btn" data-linha-menos="${idx}" aria-label="Diminuir quantidade">−</button>
+        <span class="stepper__value">${formatNum(item.quantidade)}</span>
+        <button type="button" class="stepper__btn" data-linha-mais="${idx}" aria-label="Aumentar quantidade">+</button>
+      </div>
+      <div class="pdv-ticket-item__subtotal mono">${formatBRL(item.venda)}</div>
+      <button type="button" class="icon-btn danger" data-linha-remover="${idx}" title="Remover item">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>
+  `).join("");
+
+  el.querySelectorAll("[data-linha-remover]").forEach(btn => btn.addEventListener("click", () => {
+    ticketItens.splice(Number(btn.getAttribute("data-linha-remover")), 1);
+    renderOrcTicketItens();
+    renderOrcAdminPanel();
+  }));
+  el.querySelectorAll("[data-linha-menos]").forEach(btn => btn.addEventListener("click", () =>
+    ajustarQuantidadeLinha(Number(btn.getAttribute("data-linha-menos")), -1)));
+  el.querySelectorAll("[data-linha-mais]").forEach(btn => btn.addEventListener("click", () =>
+    ajustarQuantidadeLinha(Number(btn.getAttribute("data-linha-mais")), 1)));
+}
+
+// Fase 4: editar a quantidade de uma linha já adicionada, sem recomeçar o
+// orçamento inteiro — reusa a MESMA lógica de preço de calcularOrcamentoAtual.
+function ajustarQuantidadeLinha(index, direcao) {
+  const item = ticketItens[index];
+  if (!item) return;
+  const produto = getProductById(item.produtoId);
+  const material = produto ? (produto.materiais || []).find(m => m.id === item.materialId) : null;
+  if (!produto || !material) { Toast.show("Este produto ou material não existe mais no catálogo."); return; }
+
+  let novaQuantidade;
+  if (produto.modoPreco === "tiers") {
+    const tiers = (material.tiers || []).slice().sort((a, b) => a.qtd - b.qtd);
+    const idxAtual = tiers.findIndex(t => t.qtd === item.quantidade);
+    const proximoIdx = Math.min(Math.max(idxAtual + direcao, 0), tiers.length - 1);
+    novaQuantidade = tiers[proximoIdx] ? tiers[proximoIdx].qtd : item.quantidade;
+  } else {
+    const min = produto.modoPreco === "faixas" ? (produto.qtdMinima || 1) : 1;
+    novaQuantidade = Math.max(min, item.quantidade + direcao);
+  }
+  if (novaQuantidade === item.quantidade) return;
+
+  const resultado = recalcularLinhaTicket(produto, material, novaQuantidade, item.lado);
+  if (resultado.erro) { Toast.show(resultado.erro); return; }
+  ticketItens[index] = { ...item, quantidade: resultado.quantidade, custo: resultado.custo, venda: resultado.venda, lucro: resultado.lucro, margemPct: resultado.margemPct };
+  renderOrcTicketItens();
+  renderOrcAdminPanel();
 }
 
 function validarCliente() {
@@ -603,15 +819,18 @@ function validarCliente() {
 function initOrcamentosPage() {
   refreshOrcamentoClienteOptions();
   produtoSelecionadoId = null;
+  ticketItens = [];
   document.getElementById("orcSelecaoPanel").style.display = "none";
-  document.getElementById("orcItemSelecionado").innerHTML = `Selecione um produto no catálogo ao lado.`;
   orcCategoriaAtual = "todas";
   renderOrcCategoriaChips();
   renderOrcCatalogoGrid();
-  renderOrcAdminPanel(null);
+  renderOrcTicketItens();
+  renderOrcAdminPanel();
   document.getElementById("orcMensagemPanel").style.display = "none";
   document.getElementById("orcMensagemPanel").innerHTML = "";
   renderOrcHistorico();
+
+  document.getElementById("orcBuscaProduto").addEventListener("input", renderOrcCatalogoGrid);
 
   const clienteSel = document.getElementById("orcClienteSelect");
   const avulsoInput = document.getElementById("orcClienteAvulso");
@@ -627,41 +846,78 @@ function initOrcamentosPage() {
   document.getElementById("orcQtdSelect").onchange = atualizarPreviaOrcamento;
   document.getElementById("orcQtdInput").oninput = atualizarPreviaOrcamento;
   document.getElementById("orcLado").onchange = atualizarPreviaOrcamento;
+  document.getElementById("orcQtdMinus").onclick = () => ajustarQuantidadePainel(-1);
+  document.getElementById("orcQtdPlus").onclick = () => ajustarQuantidadePainel(1);
 
   document.getElementById("btnVerOrcamentos").onclick = () => {
     document.getElementById("orcHistorico").scrollIntoView({ behavior: "smooth" });
   };
 
-  document.getElementById("btnGerarOrcamento").onclick = () => {
+  // Fase 4: "Adicionar ao ticket" — adiciona uma LINHA, não substitui o ticket.
+  document.getElementById("btnAdicionarItem").onclick = () => {
     const calc = calcularOrcamentoAtual();
     renderOrcErroOperacional(calc.erro);
-    if (calc.erro) {
-      renderOrcAdminPanel(calc);
+    if (calc.erro) return;
+
+    ticketItens.push({
+      produtoId: calc.produto.id, produtoNome: calc.produto.nome,
+      materialId: calc.material.id, materialNome: calc.material.nome,
+      quantidade: calc.quantidade, lado: calc.lado,
+      fornecedorId: calc.material.fornecedorId || null,
+      custo: calc.custo, venda: calc.venda, lucro: calc.lucro, margemPct: calc.margemPct
+    });
+    renderOrcTicketItens();
+    renderOrcAdminPanel();
+    renderOrcErroOperacional("");
+    Toast.show(`${calc.produto.nome} adicionado ao ticket.`);
+
+    // Reseta a seleção pro operador escolher o próximo produto (ex: cliente pediu cartão + panfleto).
+    produtoSelecionadoId = null;
+    renderOrcCatalogoGrid();
+    document.getElementById("orcSelecaoPanel").style.display = "none";
+  };
+
+  // Fase 4/5: "Gerar orçamento" agora fecha o TICKET inteiro (todas as linhas),
+  // não mais um item isolado. Cliente/frete/pagamento/KM continuam sendo do ticket todo.
+  document.getElementById("btnGerarOrcamento").onclick = () => {
+    if (!ticketItens.length) {
+      renderOrcErroOperacional("Adicione ao menos um item ao ticket antes de gerar o orçamento.");
       return;
     }
+    renderOrcErroOperacional("");
     if (!validarCliente()) return;
+
     const db = Store.get();
     const clienteId = clienteSel.value || null;
     const clienteNomeLivre = clienteId ? "" : avulsoInput.value.trim();
     const custoPorKm = (db.logisticsConfig && db.logisticsConfig.custoPorKm) || 0.50;
-    const kmCliente = calc.kmCliente;
-    const custoLogisticaVariavel = (kmCliente != null && kmCliente > 0) ? kmCliente * custoPorKm : null;
+    const kmClienteEl = document.getElementById("orcKmCliente");
+    const kmCliente = kmClienteEl && kmClienteEl.value !== "" ? parseFloat(kmClienteEl.value) : null;
+    const custoLogisticaVariavel = (kmCliente != null && !isNaN(kmCliente) && kmCliente > 0) ? kmCliente * custoPorKm : null;
+
+    const totais = calcularTotaisTicket();
+    const nomesUnicos = [...new Set(ticketItens.map(item => item.produtoNome))];
+    const produtoNomeResumo = nomesUnicos.length <= 2 ? nomesUnicos.join(" + ") : `${nomesUnicos[0]} +${nomesUnicos.length - 1}`;
+    const materiaisUnicos = [...new Set(ticketItens.map(item => item.materialNome))];
+    const materialNomeResumo = materiaisUnicos.length === 1 ? materiaisUnicos[0] : "Múltiplos materiais";
+    const quantidadeTotal = ticketItens.reduce((soma, item) => soma + (item.quantidade || 0), 0);
+
     const budget = {
       id: uid("orc"),
       clienteId,
       clienteNomeLivre,
-      produtoId: calc.produto.id,
-      produtoNome: calc.produto.nome,
-      materialId: calc.material.id,
-      materialNome: calc.material.nome,
-      quantidade: calc.quantidade,
-      lado: calc.lado,
-      kmCliente: kmCliente,
-      custoLogisticaVariavel: custoLogisticaVariavel,
-      custoTotal: calc.custo,
-      vendaTotal: calc.venda,
-      lucro: calc.lucro,
-      margemPct: calc.margemPct,
+      itens: ticketItens.map(item => ({ ...item })),
+      kmCliente,
+      custoLogisticaVariavel,
+      custoTotal: totais.custo,
+      vendaTotal: totais.venda,
+      lucro: totais.lucro,
+      margemPct: totais.margemPct,
+      // Campos legados (singular) mantidos como RESUMO do ticket — compatibilidade
+      // com qualquer leitura antiga desses campos fora deste arquivo.
+      produtoNome: produtoNomeResumo,
+      materialNome: materialNomeResumo,
+      quantidade: quantidadeTotal,
       frete: document.getElementById("orcFrete").value,
       pagamento: document.getElementById("orcPagamento").value,
       status: "gerado",
@@ -670,11 +926,15 @@ function initOrcamentosPage() {
     budget.mensagem = gerarMensagemWhatsApp(budget);
     db.budgets.push(budget);
     Store.persist();
-    renderOrcAdminPanel(calc);
     renderOrcMensagemPanel(budget);
     renderOrcHistorico();
     Toast.show("Orçamento gerado.");
     refreshSidebarBadges();
+
+    // Reseta o ticket pro próximo atendimento.
+    ticketItens = [];
+    renderOrcTicketItens();
+    renderOrcAdminPanel();
   };
 }
 
