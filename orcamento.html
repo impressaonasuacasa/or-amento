@@ -21,47 +21,156 @@
   .pdv-topbar__brand-name{ font-weight:700; font-size:13.5px; color:var(--color-text-900); }
   .pdv-topbar__brand-sub{ font-size:11.5px; color:var(--color-text-500); }
 
-  /* Fase 2 — "cofre" da análise de margem: visualmente distinto do resto do
-     ticket (tokens de amber já existentes), recolhido por padrão. */
+  /* Redesign PDV — trilha de orientação, só wayfinding visual [P17]; não
+     impõe navegação por etapas, a tela continua livre como hoje. */
+  .pdv-progress{ display:flex; align-items:center; gap:8px; margin:2px 0 4px; flex-wrap:wrap; }
+  .pdv-progress__step{ display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; color:var(--color-text-500); }
+  .pdv-progress__step-num{ width:18px; height:18px; border-radius:50%; background:var(--color-border-soft); color:var(--color-text-500); display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; flex-shrink:0; }
+  .pdv-progress__sep{ color:var(--color-text-400); font-size:12px; }
+
+  /* Redesign PDV — reequilíbrio do grid principal [P1]: o ticket (2ª coluna)
+     passa a pesar igual/mais que o catálogo, em vez do 1.5fr/1fr herdado. */
+  .pdv-layout{ grid-template-columns:1fr 1.15fr; }
+
+  /* Redesign PDV — entrada suave do painel "Detalhes do item" e do painel de
+     mensagem [P4][P7]. O JS continua decidindo QUANDO mostrar/esconder só
+     com display:none/"" — ao voltar de display:none o navegador reinicia a
+     animação sozinho, então nenhuma lógica de exibição foi alterada aqui. */
+  #orcSelecaoPanel{ animation:pdvPanelEnter var(--dur-med) var(--ease-standard); }
+  #orcMensagemPanel{ animation:pdvPanelEnter var(--dur-med) var(--ease-standard); }
+  @keyframes pdvPanelEnter{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* Fase 2 — "cofre" da análise de margem: tom roxo/estratégico em vez de
+     âmbar [P10] — âmbar segue significando "alerta" no resto do sistema, e
+     isso aqui é informação interna, não um problema. Recolhido por padrão. */
   .pdv-margin-box{
-    background:var(--color-amber-100);
-    border:1px solid rgba(183,121,31,0.28);
+    background:var(--color-purple-100);
+    border:1px solid rgba(110,79,201,0.28);
     border-radius:var(--radius-md);
     overflow:hidden;
   }
   .pdv-margin-box__summary{
     display:flex; align-items:center; gap:8px;
     padding:12px 16px; cursor:pointer; list-style:none;
-    font-size:12.5px; font-weight:600; color:var(--color-amber-600);
+    font-size:12.5px; font-weight:600; color:var(--color-purple-600);
     user-select:none;
   }
   .pdv-margin-box__summary::-webkit-details-marker{ display:none; }
   .pdv-margin-box__summary svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; flex-shrink:0; }
   .pdv-margin-box__summary .chevron{ margin-left:auto; transition:transform var(--dur-fast) var(--ease-standard); }
   .pdv-margin-box[open] .pdv-margin-box__summary .chevron{ transform:rotate(180deg); }
-  .pdv-margin-box__body{ padding:2px 16px 16px; border-top:1px solid rgba(183,121,31,0.22); }
+  .pdv-margin-box__body{ padding:2px 16px 16px; border-top:1px solid rgba(110,79,201,0.22); }
 
   /* Fase 2 — validação inline de campo obrigatório */
   .field-error{ font-size:11.5px; font-weight:600; color:var(--color-red-600); margin-top:-6px; }
   .field.field--invalid input, .field.field--invalid select{ border-color:var(--color-red-600); }
 
-  /* Fase 4 — stepper de quantidade */
+  /* Fase 4 — stepper de quantidade. Alvos de toque ampliados [P16]: cresce a
+     área clicável (largura/altura mínima), o texto/ícone seguem pequenos. */
   .stepper{ display:flex; align-items:stretch; border:1px solid var(--color-border); border-radius:var(--radius-sm); overflow:hidden; width:fit-content; background:var(--color-white); }
-  .stepper__btn{ width:34px; background:none; border:none; color:var(--color-brand-600); font-size:16px; font-weight:700; line-height:1; cursor:pointer; }
+  .stepper__btn{ width:40px; min-height:40px; background:none; border:none; color:var(--color-brand-600); font-size:16px; font-weight:700; line-height:1; cursor:pointer; }
   .stepper__btn:hover:not(:disabled){ background:var(--color-brand-50); }
   .stepper__btn:disabled{ opacity:0.35; cursor:not-allowed; }
   .stepper__value, .stepper__input{ min-width:96px; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:600; font-size:13px; color:var(--color-text-900); border-left:1px solid var(--color-border); border-right:1px solid var(--color-border); text-align:center; }
   .stepper__input{ border-top:none; border-bottom:none; -moz-appearance:textfield; }
   .stepper__input::-webkit-outer-spin-button, .stepper__input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-  .stepper--sm .stepper__btn{ width:24px; font-size:13px; }
+  .stepper--sm .stepper__btn{ width:34px; min-height:34px; font-size:13px; }
   .stepper--sm .stepper__value{ min-width:44px; font-size:11.5px; padding:0 4px; }
 
-  /* Fase 4 — linhas do ticket com múltiplos itens */
-  .pdv-ticket-item{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--color-border-soft); }
-  .pdv-ticket-item:last-child{ border-bottom:none; }
+  /* Fase 4 / Redesign PDV — linhas do ticket em mini-blocos [P13], com
+     destaque temporário para a linha recém-adicionada [P6]. */
+  .pdv-ticket-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    background:var(--color-surface-alt); border:1px solid var(--color-border-soft);
+    border-radius:var(--radius-sm); margin-bottom:8px;
+  }
+  .pdv-ticket-item:last-child{ margin-bottom:0; }
   .pdv-ticket-item__info{ flex:1; min-width:0; }
   .pdv-ticket-item__name{ font-size:13px; font-weight:600; color:var(--color-text-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pdv-ticket-item__subtotal{ font-size:13px; font-weight:700; white-space:nowrap; min-width:76px; text-align:right; }
+  @keyframes pdvTicketItemNew{
+    0%{ background:var(--color-brand-100); border-color:var(--color-brand-500); }
+    100%{ background:var(--color-surface-alt); border-color:var(--color-border-soft); }
+  }
+  .pdv-ticket-item--new{ animation:pdvTicketItemNew 1.3s var(--ease-standard); }
+
+  /* Redesign PDV — lista de itens com rolagem interna, pra o rodapé fixo
+     (subtotal + CTA) nunca ficar fora de alcance [P2][P3]. */
+  #orcTicketItens{ max-height:46vh; overflow-y:auto; padding-right:2px; }
+
+  /* Redesign PDV — estado vazio padronizado do ticket [P5], no mesmo
+     vocabulário visual do .chart-placeholder/.table-empty já usados no ERP. */
+  .pdv-empty-state{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:36px 20px; gap:6px;
+    border:1px dashed var(--color-border); border-radius:var(--radius-sm); background:var(--color-bg);
+  }
+  .pdv-empty-state__icon{ width:40px; height:40px; border-radius:50%; background:var(--color-surface); display:flex; align-items:center; justify-content:center; color:var(--color-text-400); margin-bottom:4px; box-shadow:var(--shadow-sm); }
+  .pdv-empty-state__icon svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; }
+  .pdv-empty-state__title{ font-size:13px; font-weight:600; color:var(--color-text-700); }
+  .pdv-empty-state__sub{ font-size:11.5px; color:var(--color-text-400); max-width:260px; }
+
+  /* Redesign PDV — rodapé fixo do ticket: subtotal + CTA de maior destaque
+     que qualquer outro botão da tela [P2][P3]. */
+  .pdv-ticket-footer{ display:flex; flex-direction:column; gap:10px; padding-top:14px; margin-top:2px; border-top:1px solid var(--color-border-soft); }
+  .pdv-ticket-footer__total{ display:flex; align-items:baseline; justify-content:space-between; }
+  .pdv-ticket-footer__label{ font-size:12.5px; color:var(--color-text-500); font-weight:600; }
+  .pdv-ticket-footer__value{ font-size:20px; font-weight:700; color:var(--color-text-900); }
+  .pdv-btn-cta{ padding:14px 22px; font-size:14.5px; font-weight:700; width:100%; justify-content:center; box-shadow:var(--shadow-md); }
+  .pdv-btn-cta:hover:not(:disabled){ box-shadow:var(--shadow-lg); }
+  @media (max-width:1100px){
+    /* [P18]: styles.css só empilha o grid em 1 coluna nesse breakpoint, mas
+       não desfaz o position:sticky de .pdv-ticket-col (fica "flutuando" por
+       cima do catálogo ao rolar) — corrigido aqui, sobrescrevendo a herança
+       só nesta tela, no mesmo espírito do .content{ max-width:1180px; } logo
+       acima. Sem isso o rodapé sticky abaixo ficaria com comportamento
+       imprevisível dentro de uma coluna que também é sticky. */
+    .pdv-ticket-col{ position:static; top:auto; }
+    /* Sem o sticky da coluna, o rodapé gruda na viewport pra não obrigar
+       o operador a rolar até o fim da página pra achar o botão. */
+    .pdv-ticket-footer{
+      position:sticky; bottom:0; z-index:10;
+      background:var(--color-surface);
+      margin:0 -22px -22px; padding:14px 22px;
+      border-top:1px solid var(--color-border-soft);
+      box-shadow:0 -4px 12px rgba(16,24,40,0.08);
+    }
+  }
+
+  /* Redesign PDV — preço de referência [P11] e selo de seleção [P12] nos
+     cards de produto do catálogo. */
+  .pdv-card{ position:relative; }
+  .pdv-card.selected::after{
+    content:"✓"; position:absolute; top:10px; right:10px;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--color-brand-600); color:#fff;
+    font-size:12px; font-weight:700; line-height:20px; text-align:center;
+    box-shadow:var(--shadow-sm);
+  }
+  .pdv-card__price{ font-size:11.5px; color:var(--color-text-500); }
+  .pdv-card__price strong{ font-family:var(--font-mono); color:var(--color-brand-700); }
+
+  /* Redesign PDV — dica de KM sob demanda [P9]: tooltip CSS puro, sem libs. */
+  .pdv-tooltip{
+    position:relative; display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; border-radius:50%; color:var(--color-text-400); cursor:help;
+  }
+  .pdv-tooltip svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.8; }
+  .pdv-tooltip:hover, .pdv-tooltip:focus{ color:var(--color-brand-600); outline:none; }
+  .pdv-tooltip::after{
+    content:attr(data-tooltip);
+    position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%) translateY(4px);
+    width:220px; padding:8px 10px; border-radius:var(--radius-sm);
+    background:var(--color-text-900); color:var(--color-white);
+    font-size:11.5px; font-weight:400; line-height:1.4; text-align:left;
+    opacity:0; pointer-events:none;
+    transition:opacity var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+    box-shadow:var(--shadow-md); z-index:20;
+  }
+  .pdv-tooltip:hover::after, .pdv-tooltip:focus::after{ opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -91,6 +200,16 @@
           <div class="page-header__actions">
             <button class="link-btn" id="btnVerOrcamentos" type="button">Ver histórico de orçamentos →</button>
           </div>
+        </div>
+
+        <div class="pdv-progress" aria-hidden="true">
+          <span class="pdv-progress__step"><span class="pdv-progress__step-num">1</span>Catálogo</span>
+          <span class="pdv-progress__sep">→</span>
+          <span class="pdv-progress__step"><span class="pdv-progress__step-num">2</span>Ticket</span>
+          <span class="pdv-progress__sep">→</span>
+          <span class="pdv-progress__step"><span class="pdv-progress__step-num">3</span>Cliente</span>
+          <span class="pdv-progress__sep">→</span>
+          <span class="pdv-progress__step"><span class="pdv-progress__step-num">4</span>Confirmação</span>
         </div>
 
         <div class="pdv-layout">
@@ -140,52 +259,18 @@
             </div>
           </div>
 
-          <!-- Coluna direita: ticket / resumo (sticky) -->
+          <!-- Coluna direita: ticket / cliente-entrega / mensagem (sticky) -->
           <div class="pdv-ticket-col">
             <div class="card panel pdv-ticket">
               <div class="panel__header">
                 <h3>Ticket do orçamento</h3>
-                <span class="badge tone-gray">Painel interno</span>
-              </div>
-
-              <div id="orcTicketItens" class="text-muted">Nenhum item adicionado ainda. Escolha um produto no catálogo ao lado.</div>
-
-              <div class="field">
-                <label>Cliente</label>
-                <select id="orcClienteSelect">
-                  <option value="">Cliente avulso (não cadastrado)</option>
-                </select>
-              </div>
-              <div class="field" id="orcClienteAvulsoWrapper">
-                <label>Nome do cliente avulso</label>
-                <input type="text" id="orcClienteAvulso" placeholder="Ex: Mariana Prado">
-              </div>
-              <div class="field-error" id="orcClienteErro"></div>
-
-              <div class="field">
-                <label>KM do fornecedor até o cliente <span class="text-muted" style="font-weight:400; font-size:12px;">(logística variável — muda a cada pedido)</span></label>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <input type="number" id="orcKmCliente" placeholder="Ex: 22" min="0" step="0.1" style="max-width:120px;" oninput="atualizarPreviaOrcamento()">
-                  <span class="text-muted" style="font-size:12.5px;" id="orcKmClienteCalc"></span>
-                </div>
-                <div class="text-muted" style="font-size:12px; margin-top:4px;">Distância da entrega × R$ 0,50/km = custo de logística variável. Entra no cálculo interno de lucro.</div>
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label>Frete</label>
-                  <select id="orcFrete">
-                    <option value="Entrega grátis no Guarujá" selected>Entrega grátis no Guarujá</option>
-                    <option value="Frete a combinar">Frete a combinar</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Pagamento</label>
-                  <input type="text" id="orcPagamento" value="Pagamento realizado somente no recebimento do produto">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span class="badge tone-blue" id="orcTicketContador">0 itens</span>
+                  <span class="badge tone-gray">Painel interno</span>
                 </div>
               </div>
 
-              <hr class="divider">
+              <div id="orcTicketItens"></div>
 
               <!-- Feedback operacional (bloqueia gerar orçamento) — sempre visível,
                    diferente da análise de margem abaixo, que é só pro dono ver. -->
@@ -205,10 +290,60 @@
                 </div>
               </details>
 
-              <button class="btn btn-primary" id="btnGerarOrcamento" type="button" style="margin-top:4px;">
-                <svg viewBox="0 0 24 24"><path d="M9 12.5 11 15l4-5"/><circle cx="12" cy="12" r="9"/></svg>
-                Gerar orçamento
-              </button>
+              <div class="pdv-ticket-footer">
+                <div class="pdv-ticket-footer__total">
+                  <span class="pdv-ticket-footer__label">Total do ticket</span>
+                  <span class="pdv-ticket-footer__value mono" id="orcTicketSubtotal">—</span>
+                </div>
+                <button class="btn btn-primary pdv-btn-cta" id="btnGerarOrcamento" type="button">
+                  <svg viewBox="0 0 24 24"><path d="M9 12.5 11 15l4-5"/><circle cx="12" cy="12" r="9"/></svg>
+                  Gerar orçamento
+                </button>
+              </div>
+            </div>
+
+            <div class="card panel" id="orcClienteCard">
+              <div class="panel__header"><h3>Cliente e entrega</h3></div>
+
+              <div class="field">
+                <label>Cliente</label>
+                <select id="orcClienteSelect">
+                  <option value="">Cliente avulso (não cadastrado)</option>
+                </select>
+              </div>
+              <div class="field" id="orcClienteAvulsoWrapper">
+                <label>Nome do cliente avulso</label>
+                <input type="text" id="orcClienteAvulso" placeholder="Ex: Mariana Prado">
+              </div>
+              <div class="field-error" id="orcClienteErro"></div>
+
+              <div class="field">
+                <label style="display:flex; align-items:center; gap:6px;">
+                  KM do fornecedor até o cliente
+                  <span class="pdv-tooltip" tabindex="0" data-tooltip="Distância da entrega × R$ 0,50/km = custo de logística variável. Entra no cálculo interno de lucro — não é enviado ao cliente.">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  </span>
+                </label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="number" id="orcKmCliente" placeholder="Ex: 22" min="0" step="0.1" style="max-width:120px;" oninput="atualizarPreviaOrcamento()">
+                  <span class="text-muted" style="font-size:12.5px;" id="orcKmClienteCalc"></span>
+                </div>
+                <div class="text-muted" style="font-size:12px; margin-top:4px;">R$ 0,50/km, calculado automaticamente.</div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label>Frete</label>
+                  <select id="orcFrete">
+                    <option value="Entrega grátis no Guarujá" selected>Entrega grátis no Guarujá</option>
+                    <option value="Frete a combinar">Frete a combinar</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Pagamento</label>
+                  <input type="text" id="orcPagamento" value="Pagamento realizado somente no recebimento do produto">
+                </div>
+              </div>
             </div>
 
             <div class="card panel" id="orcMensagemPanel" style="display:none;"></div>
@@ -272,6 +407,30 @@ function renderOrcCategoriaChips() {
   });
 }
 
+// Redesign PDV — preço de referência exibido no card do catálogo [P11].
+// Cálculo auxiliar SÓ para exibição: não grava nada no Store e não substitui
+// calcularOrcamentoAtual()/modoPrecoDoProduto() — apenas espia o menor valor
+// de venda já cadastrado entre os materiais do produto, pra dar uma pista de
+// preço antes de o operador abrir o painel de seleção.
+function precoReferenciaProduto(produto) {
+  const materiais = produto.materiais || [];
+  if (!materiais.length) return null;
+  let menor = null;
+  const considerar = (v) => { if (v !== null && v !== undefined && !isNaN(v) && (menor === null || v < menor)) menor = v; };
+  materiais.forEach(material => {
+    if (produto.modoPreco === "tiers") {
+      (material.tiers || []).forEach(t => { considerar(t.vendaFrente); considerar(t.vendaFV); });
+    } else if (produto.modoPreco === "faixas") {
+      (material.faixas || []).forEach(f => {
+        if (f.venda !== null && f.venda !== undefined) considerar(f.venda * (produto.qtdMinima || f.min || 1));
+      });
+    } else {
+      considerar(material.venda);
+    }
+  });
+  return menor;
+}
+
 function renderOrcCatalogoGrid() {
   const termo = (document.getElementById("orcBuscaProduto").value || "").trim().toLowerCase();
   const produtos = Store.get().products.filter(p =>
@@ -284,13 +443,17 @@ function renderOrcCatalogoGrid() {
     grid.innerHTML = `<div style="grid-column:1/-1;">${emptyStateHtml("Nenhum produto encontrado", termo ? "Tente outro termo de busca." : "Cadastre produtos na guia Produtos para vê-los aqui.")}</div>`;
     return;
   }
-  grid.innerHTML = produtos.map(p => `
+  grid.innerHTML = produtos.map(p => {
+    const precoRef = precoReferenciaProduto(p);
+    return `
     <button class="pdv-card ${p.id === selecionadoId ? "selected" : ""}" data-pdv-produto="${p.id}" type="button">
       <div class="pdv-card__icon"><svg viewBox="0 0 24 24">${iconeParaCategoria(p.categoria)}</svg></div>
       <div class="pdv-card__name">${escapeHtml(p.nome)}</div>
       <div class="pdv-card__meta">${(p.materiais || []).length} material(is) · ${escapeHtml(p.categoria || "Outros")}</div>
+      ${precoRef !== null ? `<div class="pdv-card__price">A partir de <strong>${formatBRL(precoRef)}</strong></div>` : ""}
     </button>
-  `).join("");
+  `;
+  }).join("");
   document.querySelectorAll("[data-pdv-produto]").forEach(btn =>
     btn.addEventListener("click", () => selecionarProdutoPDV(btn.getAttribute("data-pdv-produto"))));
 }
@@ -630,6 +793,10 @@ function renderOrcMensagemPanel(budget) {
     navigator.clipboard.writeText(budget.mensagem).then(() => Toast.show("Mensagem copiada."));
   });
   document.getElementById("btnConverterPedidoAgora").addEventListener("click", () => converterOrcamentoEmPedido(budget.id));
+
+  // [P7] O painel nasce fora da viewport em tickets longos — rola até ele
+  // pra garantir que o operador perceba que a mensagem foi gerada.
+  requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "start" }));
 }
 
 function renderOrcHistorico() {
@@ -751,16 +918,36 @@ function atualizarPreviaOrcamento() {
   renderOrcErroOperacional(calc.erro);
 }
 
-function renderOrcTicketItens() {
+// Redesign PDV — cabeçalho do ticket com contador de itens [P13] e rodapé
+// fixo com o subtotal [P2][P3]. Reaproveita calcularTotaisTicket() já
+// existente e só exibe o resultado — nenhuma lógica de cálculo nova aqui.
+function atualizarResumoTicket() {
+  const contador = document.getElementById("orcTicketContador");
+  if (contador) contador.textContent = ticketItens.length === 1 ? "1 item" : `${ticketItens.length} itens`;
+  const subtotalEl = document.getElementById("orcTicketSubtotal");
+  if (subtotalEl) subtotalEl.textContent = formatBRL(calcularTotaisTicket().venda);
+}
+
+// indiceDestaque (opcional): índice da linha recém-adicionada, que recebe o
+// destaque temporário [P6]. Chamadas já existentes (remover linha, ajustar
+// quantidade, inicialização) continuam funcionando sem passar nada aqui.
+function renderOrcTicketItens(indiceDestaque) {
   const el = document.getElementById("orcTicketItens");
   if (!ticketItens.length) {
-    el.innerHTML = `Nenhum item adicionado ainda. Escolha um produto no catálogo ao lado.`;
-    el.className = "text-muted";
+    el.innerHTML = `
+      <div class="pdv-empty-state">
+        <div class="pdv-empty-state__icon"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12Z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></div>
+        <div class="pdv-empty-state__title">Nenhum item adicionado ainda</div>
+        <div class="pdv-empty-state__sub">Escolha um produto no catálogo ao lado para começar o ticket.</div>
+      </div>
+    `;
+    el.className = "";
+    atualizarResumoTicket();
     return;
   }
   el.className = "";
   el.innerHTML = ticketItens.map((item, idx) => `
-    <div class="pdv-ticket-item">
+    <div class="pdv-ticket-item${idx === indiceDestaque ? " pdv-ticket-item--new" : ""}">
       <div class="pdv-ticket-item__info">
         <div class="pdv-ticket-item__name">${escapeHtml(item.produtoNome)}</div>
         <div class="text-muted" style="font-size:11.5px;">${escapeHtml(item.materialNome)} · ${item.lado === "fv" ? "Frente e verso" : "Frente"}</div>
@@ -776,6 +963,8 @@ function renderOrcTicketItens() {
       </button>
     </div>
   `).join("");
+
+  atualizarResumoTicket();
 
   el.querySelectorAll("[data-linha-remover]").forEach(btn => btn.addEventListener("click", () => {
     ticketItens.splice(Number(btn.getAttribute("data-linha-remover")), 1);
@@ -877,7 +1066,7 @@ function initOrcamentosPage() {
       fornecedorId: calc.material.fornecedorId || null,
       custo: calc.custo, venda: calc.venda, lucro: calc.lucro, margemPct: calc.margemPct
     });
-    renderOrcTicketItens();
+    renderOrcTicketItens(ticketItens.length - 1);
     renderOrcAdminPanel();
     renderOrcErroOperacional("");
     Toast.show(`${calc.produto.nome} adicionado ao ticket.`);
